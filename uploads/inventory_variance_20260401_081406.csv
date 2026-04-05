@@ -1,0 +1,263 @@
+item_id,item_name,sheet_on_hand,counted_qty,variance_vs_sheet,db_on_hand_before_upload
+1052,AMERICAN CHEESE SLICED,1.25,0.0,-1.25,1.25
+1004,APPLE PIE,2.0,2.0,0.0,2.0
+891,"Almonds, Sliced",2.0,2.0,0.0,2.0
+1124,"Apple, fresh",2.0,2.5,0.5,2.0
+1062,Asher Blue Cheese,0.0,12.0,12.0,0.0
+1022,BACON BITS,2.0,3.0,1.0,2.0
+1030,BEEF CHUCK FLAP BONELESS,0.0,0.0,0.0,0.0
+1029,BEEF TRI-TIP FRESH,35.0,35.0,0.0,35.0
+1011,BEER CHEESE DIP,1.0,1.0,0.0,1.0
+984,BLUEBERRY,12.0,0.0,-12.0,12.0
+1059,BUTTER SOILDS UNSALTED USDA,14.0,30.0,16.0,14.0
+1058,BUTTER WHIPPED SALTED USDA,1.0,2.0,1.0,1.0
+1129,Bacon 1,1.0,1.0,0.0,1.0
+864,Balsamic Glaze,3.25,3.0,-0.25,3.25
+1096,Bean Baked Vegetarian,2.0,0.75,-1.25,2.0
+962,"Bean, Black",4.0,2.0,-2.0,4.0
+963,"Bean, Refried",4.0,4.0,0.0,4.0
+1088,Beef Shoulder Clod Xt,140.0,20.0,-120.0,140.0
+1084,Beef Tender Stk Rdy,23.15,23.15,0.0,23.15
+1018,"Beef, Patty Slider Cooked",4.0,3.0,-1.0,4.0
+1123,Blueberry,1.0,1.0,0.0,1.0
+1035,Bourbon Pecan Pie,1.0,1.0,0.0,1.0
+1086,Bread Roll Hrvst Asst Dinner,2.0,1.0,-1.0,2.0
+1043,"Bread, Baguette",1.0,1.0,0.0,1.0
+1019,"Bread, Flatbread Pizza",0.0,0.0,0.0,0.0
+1032,Breaded okra,11.0,4.0,-7.0,11.0
+1031,"Burger patty, cooked",0.0,7.0,7.0,0.0
+1007,CAKE LAYER HUMMINGBIRD CAKE,0.0,7.0,7.0,0.0
+977,CARROT STICK,0.0,0.0,0.0,0.0
+986,CELERY STICKS,0.0,0.0,0.0,0.0
+1060,CHEESE BRIE PLAINE 60%,4.0,4.0,0.0,4.0
+1012,CHEESE HATCH QUESO,7.0,7.0,0.0,7.0
+1023,CHICKEN BREADED SLIDER,0.0,0.0,0.0,0.0
+993,CHICKEN TENDERS,2.5,2.0,-0.5,2.5
+994,CHICKEN WING,0.0,0.0,0.0,0.0
+1010,CHILI BEEF  WITHOUT BEANS,9.0,8.5,-0.5,9.0
+1015,CHOCOLATE ICE CREAM,3.0,6.0,3.0,3.0
+1006,CINNAMON ROLL THAW & SERVE,1.0,1.0,0.0,1.0
+1025,CORNBREAD BAKED CUT 12X16,3.0,3.0,0.0,3.0
+1057,CREAMER HALF & HALF,0.0,0.0,0.0,0.0
+1131,CROUTONS,1.0,0.5,-0.5,1.0
+916,"Candy, Rainbow Sprinkles",1.0,1.0,0.0,1.0
+964,Cannoli Shell,0.0,0.0,0.0,0.0
+1120,Cantaloupe,1.0,0.0,-1.0,1.0
+1081,Cheese Brie Plain 60 Domstc,2.0,2.0,0.0,2.0
+1079,Cheese Chdr Sharp Loaf,1.0,0.5,-0.5,1.0
+1080,Cheese Gruyere Comte Blocks,7.17,0.0,-7.17,0.0
+1075,Cheese Mozz Frsh Burrata 4 Oz,1.0,1.1,0.10000000000000009,1.0
+1056,"Cheese, Cheddar Shredded",11.0,5.5,-5.5,11.0
+1055,"Cheese, Cotija Grated",4.0,1.0,-3.0,4.0
+1048,"Cheese, Cube Variety",1.0,1.0,0.0,1.0
+1047,"Cheese, Manchego",2.0,2.0,0.0,2.0
+1108,"Cheese, Pimento",6.0,4.0,-2.0,6.0
+912,Chia Seed,1.0,1.0,0.0,1.0
+1083,Chicken Cvp Bck Bones,1.0,1.0,0.0,1.0
+1089,Chicken Cvp Thigh Bnls Skls,1.0,0.5,-0.5,1.0
+1127,Chicken tinga,6.0,1.0,-5.0,6.0
+947,"Chip, Wonton Strips",2.0,2.0,0.0,2.0
+948,Chipotle Pepper in Adobo,25.0,24.0,-1.0,25.0
+866,Chocolate Chip Mini,0.5,0.0,-0.5,0.5
+1100,Cilantro Bunch Iceless,1.0,0.0,-1.0,1.0
+1126,"Cilantro, fresh",1.0,0.0,-1.0,1.0
+888,Coconut Milk,0.0,0.0,0.0,0.0
+1042,Cooked Beets,1.0,1.0,0.0,1.0
+1036,Cooked Shrimp,16.0,16.0,0.0,16.0
+936,"Cracker, Carrs Water",0.5,0.5,0.0,0.5
+937,"Cracker, Flatbread",0.5,0.5,0.0,0.5
+1063,Cream Cheese Block,8.0,4.0,-4.0,8.0
+1097,Cream Sour Pure Gr A,0.0,7.0,7.0,0.0
+913,Crouton,8.0,4.0,-4.0,8.0
+970,Cucumber Hydro,0.0,0.0,0.0,0.0
+999,DAVIDS BROWNIE,2.0,2.0,0.0,2.0
+1001,DAVIDS CHOCOLATE CHIP,3.0,1.0,-2.0,3.0
+1002,DAVIDS SMORES,3.0,1.0,-2.0,3.0
+1003,DAVIDS SUGAR,3.0,5.0,2.0,3.0
+1132,"DEMI, BONEWORKS",1.0,0.0,-1.0,1.0
+929,"Dairy, Butter Clarified",0.0,0.0,0.0,0.0
+1091,Dough Cookie Choc Chip,2.0,1.0,-1.0,2.0
+1090,Dough Cookie Smores,1.0,1.0,0.0,1.0
+1092,Dough Cookie Sugar Gourm,1.0,1.0,0.0,1.0
+1133,"Dough, Danish Mini",1.0,0.0,-1.0,1.0
+878,Dressing Ranch,0.0,0.0,0.0,0.0
+938,"Dressing, BBQ Gold",3.0,3.0,0.0,3.0
+873,"Dressing, BBQ Sauce",1.0,1.0,0.0,1.0
+915,"Dressing, Balsamic Vinaigrette",2.0,1.0,-1.0,2.0
+921,"Dressing, Blue Cheese",12.0,6.0,-6.0,12.0
+942,"Dressing, Buffalo Wing Sauce",10.0,5.0,-5.0,10.0
+925,"Dressing, Caesar",0.0,4.0,4.0,0.0
+939,"Dressing, Coleslaw",3.0,1.0,-2.0,3.0
+872,"Dressing, Honey Mustard",5.0,3.0,-2.0,5.0
+931,"Dressing, Poppyseed",2.0,1.0,-1.0,2.0
+934,Dried Apricot,0.5,0.5,0.0,0.5
+865,Dried Cranberry,0.5,0.5,0.0,0.5
+935,Dried Fig,0.5,0.5,0.0,0.5
+911,"Dry, Quinoa",3.0,3.0,0.0,3.0
+917,"Dry, Thai Chili Sauce",9.0,8.0,-1.0,9.0
+990,EDIBLE ORCHIDS,0.0,0.0,0.0,0.0
+1026,FRANK ALL-BEEF 8 PER POUND 6,0.0,8.0,8.0,0.0
+965,"Flour, All Purpose",0.0,2.0,2.0,0.0
+971,Flowers Edible Orchid Mix,0.0,0.0,0.0,0.0
+1135,"GARLIC, MINCED",2.0,0.0,-2.0,2.0
+1049,GOAT CHEESE CRUMBLE,3.0,3.0,0.0,3.0
+1034,Genoa Salami,0.0,30.0,30.0,0.0
+1085,Glace Demi De Veal Classic,0.0,0.0,0.0,0.0
+1104,Graham Cracker Crumbs,0.0,0.0,0.0,0.0
+1078,Ham Capicola,10.17,10.0,-0.16999999999999993,10.17
+1076,Ham Prosciutto Sli,1.0,2.0,1.0,1.0
+1061,Heavy Cream,12.0,9.0,-3.0,12.0
+874,"Honey, Mikes Hot",6.0,6.0,0.0,6.0
+1121,Honeydew,1.0,0.0,-1.0,1.0
+930,Horseradsih Prepared,0.0,0.0,0.0,0.0
+908,Instant Food Thickener,0.0,3.0,3.0,0.0
+863,"Jalapeno, Slice",15.0,14.0,-1.0,15.0
+976,KALE SALAD MIX,2.0,0.0,-2.0,2.0
+1009,KRY LIME PIE 8- CUT,0.0,0.0,0.0,0.0
+949,Ketchup Jug,1.0,0.0,-1.0,1.0
+978,LEAF LETTUCE,0.0,0.0,0.0,0.0
+987,LEMONS,0.0,0.0,0.0,0.0
+991,LETTUCE ROMAINE HEATRS,0.0,0.0,0.0,0.0
+988,LIMES,0.0,0.0,0.0,0.0
+972,Lettuce Spring Mix,1.0,0.0,-1.0,1.0
+1101,Lime Fresh,0.0,0.0,0.0,0.0
+1065,Liquid Eggs,6.0,0.0,-6.0,6.0
+1040,"Loralies, honey pecan tarts",0.0,0.0,0.0,0.0
+1037,"Loralies, mini blueberry pie",3.0,3.0,0.0,3.0
+1039,"Loralies, mini dutch apple pie",3.0,0.0,-3.0,3.0
+1038,"Loralies, mini pecan pie",0.0,0.0,0.0,0.0
+1020,MAC & CHEESE ( STOUFFERS),2.0,2.0,0.0,2.0
+1051,MOZZARELLA CHEESE FRESH LOGS,0.0,0.0,0.0,0.0
+955,Mandarin Orange,4.0,0.0,-4.0,4.0
+890,"Mayo, Heavy Duty",4.0,0.0,-4.0,4.0
+1125,"Mint, fresh",1.0,0.0,-1.0,1.0
+879,Molasses Light,2.0,2.0,0.0,2.0
+922,"Mustard, Creole",7.0,6.0,-1.0,7.0
+923,"Mustard, Dijon",9.0,8.0,-1.0,9.0
+909,"Nut, Marcona Almond",1.0,2.0,1.0,1.0
+910,"Nut, Sunflower Seed",1.0,1.0,0.0,1.0
+941,"Nuts, Pecan pcs",2.0,2.0,0.0,2.0
+979,ONION GREEN ICELESS,0.0,0.0,0.0,0.0
+980,"ONION YELLOW DCD 1/4""",1.0,0.0,-1.0,1.0
+989,ONIONS RED SLICED,4.0,0.0,-4.0,4.0
+1087,Oil Truffle White Glass Jar,1.0,1.0,0.0,1.0
+946,"Oil, Extra Virgin",0.0,0.0,0.0,0.0
+945,"Oil, Olive blend",1.0,0.0,-1.0,1.0
+907,"Oil, Toasted Sesame",4.5,4.5,0.0,4.5
+940,Onion Soup Mix,6.0,6.0,0.0,6.0
+1099,Onion Yel Diced 1/4,2.0,0.0,-2.0,2.0
+1064,Organic Eggs,3.0,15.0,12.0,3.0
+1027,PEACH PIE,2.0,1.0,-1.0,2.0
+997,PEKING DUCK SPRING ROLL,2.0,2.5,0.5,2.0
+975,PEPPER MINI VEGGIE SWEET,0.0,0.0,0.0,0.0
+1021,PICKLED CHIPS,19.0,17.0,-2.0,19.0
+1013,PICKLED RED ONION,2.0,2.0,0.0,2.0
+992,POPCORN CHICKEN,0.5,1.0,0.5,0.5
+1016,POTATO WEDGE 8 CUT,3.0,3.0,0.0,3.0
+1024,POTATO WEDGE FRY SWEET,3.0,3.0,0.0,3.0
+996,PROP & PELLER PRETZEL BITES,1.0,1.0,0.0,1.0
+1054,PROVOLON CHEESE SLICE .75,12.0,0.0,-12.0,12.0
+862,Pan Spray,4.0,2.0,-2.0,4.0
+1105,Panko Bread Crumbs,0.0,1.5,1.5,0.0
+951,"Pasta, Cavatappi",0.0,0.0,0.0,0.0
+950,"Pasta, Med Shell",1.0,0.0,-1.0,1.0
+952,"Pasta, Spaghetti",0.0,0.0,0.0,0.0
+1072,Peach Sli Iqf,2.0,2.0,0.0,2.0
+1041,Peas and Carrots,0.5,0.5,0.0,0.5
+1073,Pecan Half Med Fcy Raw,1.0,1.0,0.0,1.0
+956,"Pepper, Diced Fancy",0.0,0.0,0.0,0.0
+889,"Pepper, Roasted Whole",25.0,17.0,-8.0,25.0
+1033,Phyllo Shells,4.0,4.0,0.0,4.0
+1069,"Pickle, Slice",0.0,0.5,0.5,0.0
+1068,"Pickle, Whole Kosher",0.5,0.5,0.0,0.5
+1066,Pickled red onion,0.0,0.0,0.0,0.0
+1119,Pineapple,1.0,0.0,-1.0,1.0
+1095,Potato Pearl Xrich Low Sodium,0.5,0.5,0.0,0.5
+1005,RED VELEVT 9-INCH 14 CUT,1.0,1.0,0.0,1.0
+1008,RUBEN SPRING ROLLS,1.0,1.0,0.0,1.0
+974,Radish Watermelon,0.0,1.0,1.0,0.0
+1082,Rice Arborio,1.0,0.0,-1.0,1.0
+1094,Rice Parboiled Perfect,3.0,0.0,-3.0,3.0
+944,"Rice, Parboiled",3.0,0.0,-3.0,3.0
+1044,SALAD POTATO WITH MUSTARD,2.0,6.0,4.0,2.0
+1050,SHAVED PARMESAN,0.0,1.0,1.0,0.0
+982,SHREDDED CARROT,1.0,0.0,-1.0,1.0
+1045,SHREDDED JACK CHEESE,3.0,0.0,-3.0,3.0
+981,SHREDDED RED CABBAGE,1.0,0.0,-1.0,1.0
+1046,SOUR CREAM,3.0,7.0,4.0,3.0
+985,STRAWBERRY,8.0,0.0,-8.0,8.0
+998,SWEET STREET BLONDIE,0.0,0.0,0.0,0.0
+995,SWEET STREET CARAMEL CAKE,0.0,0.0,0.0,0.0
+1000,SWEET STREET DESSERT BAR,2.0,2.0,0.0,2.0
+1134,SWEET STREET DESSERT BARS,4.0,0.0,-4.0,4.0
+1053,SWISS SLICED CHEESE .5,4.0,4.0,0.0,4.0
+1077,Salami Genoa Sli,1.0,3.0,2.0,1.0
+958,"Salsa, Fried Roasted",10.0,1.0,-9.0,10.0
+933,"Salsa, Green",0.0,0.0,0.0,0.0
+932,"Salsa, Red",14.0,0.0,-14.0,14.0
+957,"Salsa, Verde",0.0,0.0,0.0,0.0
+886,"Salt, Iodized",1.0,1.0,0.0,1.0
+885,"Salt, Kosher",4.0,6.5,2.5,4.0
+887,"Sauce, Aji Pepper",12.0,12.0,0.0,12.0
+1070,"Sauce, Cocktail",5.0,4.0,-1.0,5.0
+884,"Sauce, Sweet n Sour",1.75,2.0,0.25,1.75
+968,"Seasoning, All Purpose",0.0,0.0,0.0,0.0
+895,"Seasoning, Chili Powder, Dark",1.0,0.75,-0.25,1.0
+967,"Seasoning, Cinnamon Ground",0.5,0.5,0.0,0.5
+902,"Seasoning, Cumin",0.75,0.5,-0.25,0.75
+943,"Seasoning, Fruit Tajin",5.0,5.0,0.0,5.0
+903,"Seasoning, Garlic Granulated",0.75,0.5,-0.25,0.75
+897,"Seasoning, Ground Clove",1.0,1.0,0.0,1.0
+905,"Seasoning, Ground Ginger",0.5,0.5,0.0,0.5
+899,"Seasoning, Italian",0.25,0.0,-0.25,0.25
+966,"Seasoning, Onion Powder",0.0,0.75,0.75,0.0
+898,"Seasoning, Oregano Dry",0.5,0.25,-0.25,0.5
+896,"Seasoning, Paprika",1.0,0.5,-0.5,1.0
+900,"Seasoning, Parsley Dry",1.0,0.0,-1.0,1.0
+906,"Seasoning, Pepper Cayenne",0.0,1.0,1.0,0.0
+894,"Seasoning, Sazon Goya",5.0,5.0,0.0,5.0
+901,"Seasoning, Thyme Dry",0.0,0.0,0.0,0.0
+904,"Seasoning, Turmeric",1.0,1.0,0.0,1.0
+969,"Shortening,Fryer Oil",2.0,6.0,4.0,2.0
+1074,Shrimp Wht P D Tlon Ckd 16/20,1.0,1.0,0.0,1.0
+1128,Smoked Chicken,2.0,2.0,0.0,2.0
+880,Soy Sauce,1.5,1.5,0.0,1.5
+875,"Steak Sauce, A1",0.0,0.0,0.0,0.0
+1122,Strawberry,1.0,0.0,-1.0,1.0
+892,"Sugar, Granulated",28.0,16.0,-12.0,28.0
+893,"Sugar, Light Brown",10.0,0.0,-10.0,10.0
+983,TOMATO ROMA SLICED,2.0,0.0,-2.0,2.0
+876,"Tobasco, Green",24.0,24.0,0.0,24.0
+973,Tomato Cherry Heirloom,1.0,0.0,-1.0,1.0
+960,"Tomato, Crushed",0.0,0.0,0.0,0.0
+961,"Tomato, Fired Roasted",0.0,0.0,0.0,0.0
+959,"Tomato, Marinara",4.0,4.0,0.0,4.0
+918,"Topping, Caramel",0.0,0.0,0.0,0.0
+919,"Topping, Chocolate",0.0,0.0,0.0,0.0
+920,"Topping, Raspberry",0.0,0.0,0.0,0.0
+1093,Tortilla Flour Street 4.5,3.0,2.0,-1.0,3.0
+1106,Tortilla Strips,0.75,0.75,0.0,0.75
+954,"Tortilla, 12"" Wrap",0.5,2.0,1.5,0.5
+877,"Tortilla, 4.5""",32.0,0.0,-32.0,32.0
+953,"Tortilla, 6""",0.0,0.0,0.0,0.0
+1130,"Turkey, Sliced deli",4.0,1.0,-3.0,4.0
+1107,Tzatziki Sauce,3.0,3.0,0.0,3.0
+1014,VANILLA ICE CREAM,0.0,0.0,0.0,0.0
+1017,"Veg, Rstd Corn",1.0,2.0,1.0,1.0
+882,"Vinegar, Apple Cider",12.0,10.5,-1.5,12.0
+914,"Vinegar, Champagne",2.0,2.0,0.0,2.0
+883,"Vinegar, Rice",3.25,3.25,0.0,3.25
+881,"Vinegar, White",3.25,3.25,0.0,3.25
+1028,"Waffle, Belgiian Pearl",0.0,3.0,3.0,0.0
+1067,chow chow,1.0,1.0,0.0,1.0
+1071,horseradish sauce,0.0,0.0,0.0,0.0
+1117,kale salad mix,2.0,0.0,-2.0,2.0
+1115,"onion, dice",1.5,0.0,-1.5,1.5
+1114,"onion, julienne",2.0,1.0,-1.0,2.0
+1113,"pepper, green dice",1.0,0.0,-1.0,1.0
+1112,"pepper, red dice",1.0,0.0,-1.0,1.0
+1109,"pepper, whole fresh",15.0,0.0,-15.0,15.0
+1116,shredded cabbage,2.0,0.0,-2.0,2.0
+1118,"shreeded cabbage, red",1.0,0.0,-1.0,1.0
+1110,"tomato, roma whole",2.0,0.0,-2.0,2.0
+1111,"tomato, sliced",2.0,0.0,-2.0,2.0

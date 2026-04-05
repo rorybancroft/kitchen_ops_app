@@ -1,0 +1,214 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Menu Builder</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
+    textarea { width:100%; min-height:180px; padding:10px; border:1px solid #d1d5db; border-radius:8px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f4f4f4; text-align: left; }
+    button, a.button { padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; background:#f8fafc; text-decoration:none; color:#111827; }
+    button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
+  </style>
+</head>
+<body>
+  <h1>Menu Builder</h1>
+  <p>
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a class="button" href="{{ url_for('inventory') }}">Inventory</a>
+  </p>
+
+  <div class="card">
+    <form method="post" id="menu-order-form">
+      <input type="hidden" name="export_csv" id="export_csv" value="0">
+      <input type="hidden" name="export_vendor_csv" id="export_vendor_csv" value="0">
+      <h2 style="margin-top:0;">Menu Builder (Recipes → Vendor Order)</h2>
+      <p style="color:#475569; font-size:14px; margin-top:-6px;">Select recipes, set target servings, and we'll roll ingredient demand into vendor purchase needs.</p>
+
+      <table id="recipe-builder-table">
+        <thead><tr><th>Recipe</th><th>Target Servings</th><th></th></tr></thead>
+        <tbody id="recipe-builder-body">
+          {% for rr in selected_recipe_rows %}
+          <tr>
+            <td>
+              <select name="recipe_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px;">
+                <option value="">Select recipe...</option>
+                {% for r in recipes %}
+                <option value="{{ r['id'] }}" {% if rr['recipe_id']|string == r['id']|string %}selected{% endif %}>{{ r['name'] }} (base {{ r['servings'] }} servings)</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td><input type="number" name="recipe_target_servings" min="0" step="1" value="{{ rr['servings'] }}" placeholder="e.g. 250" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px;"></td>
+            <td><button type="button" onclick="removeRecipeRow(this)">Remove</button></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p><button type="button" onclick="addRecipeRow()">+ Add Recipe</button></p>
+
+      <hr style="border:none; border-top:1px solid #e5e7eb; margin:18px 0;">
+
+      <h2 style="margin-top:0;">Build from inventory by people count</h2>
+      <p style="color:#475569; font-size:14px; margin-top:-6px;">Pick inventory items and enter quantity per person (in the item's base unit).</p>
+
+      <p>
+        <label><strong>People count</strong></label><br>
+        <input type="number" name="people_count" min="1" step="1" value="{{ people_count or 1 }}" style="padding:8px; border:1px solid #d1d5db; border-radius:8px; width:140px;">
+      </p>
+      <p>
+        <label><strong>Guest buffer %</strong> (default 10%)</label><br>
+        <input type="number" name="guest_buffer_pct" min="0" step="1" value="{{ guest_buffer_pct if guest_buffer_pct is not none else 10 }}" style="padding:8px; border:1px solid #d1d5db; border-radius:8px; width:140px;">
+      </p>
+
+      <table id="builder-table">
+        <thead><tr><th>Inventory Item</th><th>Qty Per Person</th><th></th></tr></thead>
+        <tbody id="builder-body">
+          <tr>
+            <td>
+              <select name="row_item_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px;">
+                <option value="">Select item...</option>
+                {% for i in items %}
+                <option value="{{ i['id'] }}">{{ i['name'] }} ({{ i['unit'] }})</option>
+                {% endfor %}
+              </select>
+            </td>
+            <td><input type="number" name="row_qty_per_person" min="0" step="0.01" placeholder="e.g. 0.25" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px;"></td>
+            <td><button type="button" onclick="removeRow(this)">Remove</button></td>
+          </tr>
+        </tbody>
+      </table>
+      <p><button type="button" onclick="addRow()">+ Add Item</button></p>
+
+      <hr style="border:none; border-top:1px solid #e5e7eb; margin:18px 0;">
+
+      <p>Optional quick paste mode (legacy): <strong>Item Name, Qty Needed</strong></p>
+      <p style="color:#475569; font-size:14px;">Example:<br>Chicken Breast, 20<br>Potatoes, 15<br>Olive Oil, 3</p>
+      <textarea name="menu_text" placeholder="Paste menu requirements here...">{{ raw_menu }}</textarea>
+
+      <p><button class="primary" type="submit">Build Order</button></p>
+    </form>
+  </div>
+
+  <template id="recipe-row-template">
+    <tr>
+      <td>
+        <select name="recipe_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px;">
+          <option value="">Select recipe...</option>
+          {% for r in recipes %}
+          <option value="{{ r['id'] }}">{{ r['name'] }} (base {{ r['servings'] }} servings)</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td><input type="number" name="recipe_target_servings" min="0" step="1" placeholder="e.g. 250" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px;"></td>
+      <td><button type="button" onclick="removeRecipeRow(this)">Remove</button></td>
+    </tr>
+  </template>
+
+  <template id="row-template">
+    <tr>
+      <td>
+        <select name="row_item_id" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px;">
+          <option value="">Select item...</option>
+          {% for i in items %}
+          <option value="{{ i['id'] }}">{{ i['name'] }} ({{ i['unit'] }})</option>
+          {% endfor %}
+        </select>
+      </td>
+      <td><input type="number" name="row_qty_per_person" min="0" step="0.01" placeholder="e.g. 0.25" style="width:100%; padding:8px; border:1px solid #d1d5db; border-radius:8px;"></td>
+      <td><button type="button" onclick="removeRow(this)">Remove</button></td>
+    </tr>
+  </template>
+
+  <script>
+    function addRecipeRow() {
+      const tpl = document.getElementById('recipe-row-template');
+      const clone = tpl.content.cloneNode(true);
+      document.getElementById('recipe-builder-body').appendChild(clone);
+    }
+
+    function removeRecipeRow(btn) {
+      const tbody = document.getElementById('recipe-builder-body');
+      if (tbody.children.length === 1) return;
+      btn.closest('tr').remove();
+    }
+
+    function addRow() {
+      const tpl = document.getElementById('row-template');
+      const clone = tpl.content.cloneNode(true);
+      document.getElementById('builder-body').appendChild(clone);
+    }
+
+    function removeRow(btn) {
+      const tbody = document.getElementById('builder-body');
+      if (tbody.children.length === 1) return;
+      btn.closest('tr').remove();
+    }
+
+    function exportOrderCsv() {
+      const form = document.getElementById('menu-order-form');
+      const exportInput = document.getElementById('export_csv');
+      exportInput.value = '1';
+      form.submit();
+      setTimeout(() => { exportInput.value = '0'; }, 300);
+    }
+
+    function exportVendorSheets() {
+      const form = document.getElementById('menu-order-form');
+      const exportInput = document.getElementById('export_vendor_csv');
+      exportInput.value = '1';
+      form.submit();
+      setTimeout(() => { exportInput.value = '0'; }, 300);
+    }
+  </script>
+
+  {% if results %}
+  <div class="card">
+    <h2 style="margin-top:0;">Order Recommendations</h2>
+    <p>
+      <button type="button" onclick="exportOrderCsv()">Export PO CSV</button>
+      <button type="button" onclick="exportVendorSheets()">Export Vendor-Separated Sheets (ZIP)</button>
+    </p>
+    <table>
+      <thead><tr><th>Item</th><th>Needed</th><th>On Hand</th><th>Order Qty</th><th>Unit</th><th>Vendor</th><th>Est Cost</th></tr></thead>
+      <tbody>
+      {% for r in results %}
+      <tr>
+        <td>{{ r['name'] }}</td>
+        <td>{{ r['qty_needed'] }}</td>
+        <td>{{ r['on_hand'] }}</td>
+        <td>{{ r['to_order'] }}</td>
+        <td>{{ r['unit'] }}</td>
+        <td>{{ r['vendor'] }}</td>
+        <td>${{ '%.2f'|format(r['est_cost']) }}</td>
+      </tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    <p><strong>Total Estimated Order Cost: ${{ '%.2f'|format(total_est) }}</strong></p>
+
+    {% if vendor_groups %}
+    <h3>By Vendor</h3>
+    <ul>
+      {% for vendor, group in vendor_groups.items() %}
+      <li><strong>{{ vendor }}</strong> — ${{ '%.2f'|format(group['total']) }} ({{ group['rows']|length }} items)</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if missing %}
+  <div class="card">
+    <h2 style="margin-top:0;">Items Not Found in Inventory</h2>
+    <ul>
+      {% for m in missing %}
+      <li>{{ m['name'] }} (needed {{ m['qty_needed'] }})</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</body>
+</html>

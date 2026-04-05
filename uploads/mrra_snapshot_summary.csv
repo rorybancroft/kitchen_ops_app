@@ -1,0 +1,4 @@
+snapshot_tab,csv_file,item_rows,sum_units,sum_extended_value
+DDEC 25 INV MRRA,mrra_snapshot_ddec_25_inv_mrra.csv,212,1275.87,18737.49
+Jan 2026 INV,mrra_snapshot_jan_2026_inv.csv,214,1240.74,18647.65
+February 2026 INV,mrra_snapshot_february_2026_inv.csv,216,1165.49,17874.78

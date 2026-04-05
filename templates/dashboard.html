@@ -1,0 +1,154 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>MIRA Dashboard</title>
+  <style>
+    :root { --glass: rgba(255,255,255,.9); --dark:#1f2937; --accent:#f97316; }
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      color: var(--dark);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.04), rgba(255,255,255,0) 35%),
+        radial-gradient(circle at 80% 70%, rgba(255,255,255,.03), rgba(255,255,255,0) 40%),
+        linear-gradient(rgba(6,10,14,.86), rgba(6,10,14,.86)),
+        url('https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=2000&q=60') center/cover fixed;
+      min-height: 100vh;
+    }
+    .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px; position: relative; }
+    .hero { position: relative; z-index: 2; background: var(--glass); border-radius: 16px; padding: 22px; box-shadow: 0 12px 30px rgba(0,0,0,.2); }
+    .bg-photos {
+      position: absolute;
+      right: 20px;
+      top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, 120px);
+      gap: 10px;
+      z-index: 1;
+    }
+    .bg-photo {
+      height: 85px;
+      border-radius: 10px;
+      border: 1px dashed rgba(255,255,255,.35);
+      background-size: cover;
+      background-position: center;
+      box-shadow: 0 8px 20px rgba(0,0,0,.20);
+      opacity: .3;
+      filter: grayscale(1) contrast(1.25) brightness(1.05);
+      mix-blend-mode: screen;
+    }
+    h1 { margin: 0 0 8px; }
+    .sub { color:#4b5563; margin:0; }
+    .inv-switch { margin-top: 12px; display:flex; align-items:center; gap:8px; }
+    .inv-switch select, .inv-switch button { padding:6px 10px; border-radius:8px; border:1px solid #d1d5db; }
+    .inv-tag { display:inline-block; background:#111827; color:#fff; font-size:12px; border-radius:999px; padding:4px 10px; margin-left:8px; }
+    .grid { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 12px; margin-top: 18px; }
+    .metric { background:#fff; border-radius: 12px; padding: 12px; border:1px solid #e5e7eb; }
+    .label { font-size: 12px; color:#6b7280; text-transform: uppercase; }
+    .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
+    .nav { position: relative; z-index: 2; display:grid; grid-template-columns: repeat(2, minmax(220px,1fr)); gap:12px; margin-top:18px; }
+    .card-link {
+      display:block; text-decoration:none; color:inherit; background:var(--glass);
+      border:1px solid #e5e7eb; border-radius:14px; padding:16px;
+      transition:.15s transform ease, .15s box-shadow ease;
+    }
+    .card-link:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
+    .card-link h3 { margin:0 0 6px; }
+    .pill { display:inline-block; margin-top:10px; font-size:12px; color:#fff; background:var(--accent); padding:4px 8px; border-radius:999px; }
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: repeat(2, 1fr); }
+      .nav { grid-template-columns: 1fr; }
+      .bg-photos { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="bg-photos" aria-hidden="true">
+      <div class="bg-photo" title="Vegetables" style="background-image:url('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=70');"></div>
+      <div class="bg-photo" title="Meats" style="background-image:url('https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=600&q=70');"></div>
+      <div class="bg-photo" title="Beef cuts" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Beef_Cuts.svg/1024px-Beef_Cuts.svg.png'); background-color:#fff;"></div>
+    </div>
+    <section class="hero">
+      <h1>MIRA <span class="inv-tag">{{ active_inventory_label }}</span></h1>
+      <p class="sub">Menu, Inventory &amp; Recipe Analytics</p>
+      <p class="sub" style="margin-top:6px;">Command center — jump to inventory, recipes, vendors, and ordering.</p>
+      {% if first_run %}
+      <p style="margin-top:10px;"><a class="pill" style="text-decoration:none;" href="{{ url_for('setup_wizard') }}">Start First-Run Setup Wizard</a></p>
+      {% endif %}
+      <form class="inv-switch" method="post" id="inventory-switcher">
+        <label for="inv">Inventory:</label>
+        <select id="inv" name="inv" onchange="window.location.href='/inventory/select/' + this.value;">
+          {% for key, label in inventory_options %}
+            <option value="{{ key }}" {% if key == active_inventory_key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </form>
+
+      <div class="grid">
+        <div class="metric"><div class="label">Inventory Value</div><div class="value">${{ '%.2f'|format(total_value) }}</div></div>
+        <div class="metric"><div class="label">Items</div><div class="value">{{ item_count }}</div></div>
+        <div class="metric"><div class="label">Recipes</div><div class="value">{{ recipe_count }}</div></div>
+        <div class="metric"><div class="label">Low Stock</div><div class="value">{{ low_stock_count }}</div></div>
+      </div>
+    </section>
+
+    <section class="nav">
+      <a class="card-link" href="{{ url_for('setup_wizard') }}">
+        <h3>Setup Wizard</h3>
+        <p>First-run onboarding: import inventory, build recipes, and launch menu ordering.</p>
+      </a>
+      <a class="card-link" href="{{ url_for('inventory') }}">
+        <h3>Inventory</h3>
+        <p>View stock on hand, filter by vendor, and edit item levels.</p>
+      </a>
+      <a class="card-link" href="{{ url_for('new_item') }}">
+        <h3>Add Item</h3>
+        <p>Create a new ingredient/item in the inventory catalog.</p>
+      </a>
+      <a class="card-link" href="{{ url_for('suggested_order') }}">
+        <h3>Suggested Orders</h3>
+        <p>Auto-calc what to order based on reorder levels and on-hand qty.</p>
+      </a>
+      <a class="card-link" href="{{ url_for('order_from_menu') }}">
+        <h3>Menu Builder</h3>
+        <p>Build menus from recipes, scale servings, and generate vendor-ready purchase orders.</p>
+      </a>
+      <a class="card-link" href="{{ url_for('inventory_transfers') }}">
+        <h3>Inventory Transfers</h3>
+        <p>Track items moved off inventory with from/to and monthly printout.</p>
+      </a>
+      <a class="card-link" href="{{ url_for('inventory_upload_invoice') }}">
+        <h3>Upload Invoice</h3>
+        <p>Import invoice CSV lines to increment on-hand and refresh costs.</p>
+      </a>
+      <a class="card-link" href="{{ url_for('waste_log') }}">
+        <h3>Waste Tracking</h3>
+        <p>Log spoiled or dropped items, calculate financial loss, and print monthly valuations.</p>
+        <span class="pill">New</span>
+      </a>
+      <a class="card-link" href="{{ url_for('recipes') }}">
+        <h3>Recipe Costing</h3>
+        <p>Build recipes, set sale price, and track food cost %.</p>
+        <span class="pill">Popular</span>
+      </a>
+      <a class="card-link" href="{{ url_for('vendors') }}">
+        <h3>Vendor Management</h3>
+        <p>Add and manage your suppliers, sales reps, and delivery info.</p>
+        <span class="pill">New</span>
+      </a>
+      <a class="card-link" href="{{ url_for('purchases') }}">
+        <h3>Purchases Log</h3>
+        <p>Track your monthly spending, log invoices, and view totals.</p>
+        <span class="pill" style="background-color: #059669;">New</span>
+      </a>
+      <a class="card-link" href="{{ url_for('month_end_summary') }}">
+        <h3>Month End Summary</h3>
+        <p>Combine purchases, waste, transfers, and inventory into one report.</p>
+        <span class="pill" style="background-color: #2563eb;">Report</span>
+      </a>
+    </section>
+  </div>
+</body>
+</html>

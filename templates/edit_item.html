@@ -1,0 +1,35 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Edit Item</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; max-width:720px; }
+    label { display:block; margin-top:10px; color:#334155; }
+    input { padding:8px; width:100%; max-width:420px; border:1px solid #d1d5db; border-radius:8px; margin-top:4px; }
+    button, a.button { margin-top:14px; padding:8px 12px; border-radius:8px; border:1px solid #d1d5db; background:#f8fafc; text-decoration:none; color:#111827; }
+    button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
+  </style>
+</head>
+<body>
+  <h1>Edit Inventory Item</h1>
+  <p>
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a class="button" href="{{ url_for('inventory') }}">Inventory</a>
+  </p>
+  <div class="card">
+    <form method="post">
+      <label>Name <input name="name" value="{{ item['name'] }}" required></label>
+      <label>Inventory unit (lb, oz, ct, dozen, each, case) <input name="unit" value="{{ item['unit'] }}" required></label>
+      <label>Purchase unit (case, pound, bag, each) <input name="purchase_unit" value="{{ item['purchase_unit'] or '' }}"></label>
+      <label>Pack size (ex: 2/5LB, 10LB, 1ga, 3ct) <input name="pack_size" value="{{ item['pack_size'] or '' }}"></label>
+      <label>Vendor <input name="vendor" value="{{ item['vendor'] or '' }}"></label>
+      <label>Cost per unit <input name="cost_per_unit" type="number" step="0.01" value="{{ item['cost_per_unit'] }}" required></label>
+      <label>On hand qty <input name="on_hand" type="number" step="0.01" value="{{ item['on_hand'] }}" required></label>
+      <label>Reorder level <input name="reorder_level" type="number" step="0.01" value="{{ item['reorder_level'] }}" required></label>
+      <button class="primary" type="submit">Save Changes</button>
+    </form>
+  </div>
+</body>
+</html>

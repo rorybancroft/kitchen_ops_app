@@ -1,0 +1,230 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Recipe Detail</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background:#fafafa; color:#222; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:14px; margin:12px 0; }
+    .actions { display:flex; gap:8px; align-items:center; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
+    th, td { border: 1px solid #ddd; padding: 8px; vertical-align: top; }
+    th { background: #f4f4f4; text-align: left; }
+    input, select { padding: 6px; margin-right: 8px; }
+    button { padding: 8px 12px; border:1px solid #ccc; border-radius:8px; background:#f8f8f8; cursor:pointer; }
+    .summary-grid { display:grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap:10px; }
+    .summary-grid .metric { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:10px; }
+    .metric-label { color:#666; font-size:12px; text-transform:uppercase; letter-spacing:.04em; }
+    .metric-value { font-size:20px; font-weight:700; margin-top:3px; }
+    .recipe-card { background:#fff; border:1px solid #d1d5db; border-radius:12px; padding:14px; margin:14px 0; }
+    .recipe-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom:10px; }
+    .recipe-layout { display:grid; grid-template-columns: 1.5fr 1fr; gap:12px; }
+    .recipe-photo { width:100%; max-height:360px; object-fit:cover; border-radius:10px; border:1px solid #d1d5db; }
+    @media print {
+      body { background:#fff; margin:0.35in; }
+      .no-print { display:none !important; }
+      .card, table, .recipe-card { border:1px solid #999; }
+      button { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <h1>{{ recipe['name'] }}</h1>
+  <p class="no-print">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    &nbsp;|&nbsp;
+    <a href="{{ url_for('inventory') }}">Inventory</a>
+    &nbsp;|&nbsp;
+    <a href="{{ url_for('recipes') }}">Recipes</a>
+  </p>
+
+  <div class="card no-print">
+    <h2 style="margin-top:0;">Recipe Settings</h2>
+    <form method="post" class="actions" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="update_recipe">
+      <label>Servings <input name="servings" type="number" step="0.01" value="{{ recipe['servings'] }}" required></label>
+      <label>Sale price / serving ($) <input name="sale_price" type="number" step="0.01" min="0" value="{{ recipe['sale_price'] or 0 }}"></label>
+      <label>Photo <input name="image" type="file" accept="image/*"></label>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div>Allergens:</div>
+        <div>
+          {% for a in common_allergens %}
+            <label style="display:inline-flex; align-items:center; gap:4px; margin-right:8px;">
+              <input type="checkbox" name="allergens_list" value="{{ a }}" {% if a in selected_common %}checked{% endif %}>{{ a }}
+            </label>
+          {% endfor %}
+        </div>
+        <input name="allergens_custom" value="{{ custom_allergens }}" placeholder="Other allergens (comma-separated)">
+      </div>
+      <div style="display:flex; flex-direction:column; gap:6px;">
+        <div>Dietary labels:</div>
+        <div>
+          {% for d in dietary_labels %}
+            <label style="display:inline-flex; align-items:center; gap:4px; margin-right:8px;">
+              <input type="checkbox" name="dietary_list" value="{{ d }}" {% if d in selected_dietary %}checked{% endif %}>{{ d }}
+            </label>
+          {% endfor %}
+        </div>
+        <input name="dietary_custom" value="{{ custom_dietary }}" placeholder="Other labels (comma-separated)">
+      </div>
+      <button type="submit">Save Settings</button>
+      <button type="button" onclick="window.print()">Print / Save PDF</button>
+    </form>
+  </div>
+
+  <section class="recipe-card">
+    <div class="recipe-head">
+      <div>
+        <h2 style="margin:0;">{{ recipe['name'] }}</h2>
+        <div style="color:#64748b; margin-top:4px;">Yield: {{ recipe['servings'] }} serving(s)</div>
+      </div>
+      <div style="text-align:right;">
+        <div><strong>Selling Price:</strong> ${{ '%.2f'|format(recipe['sale_price'] or 0) }}</div>
+        <div><strong>Food Cost %:</strong> {% if food_cost_pct is not none %}{{ '%.1f'|format(food_cost_pct) }}%{% else %}—{% endif %}</div>
+        <div><strong>Total Recipe Cost:</strong> ${{ '%.2f'|format(total_cost) }}</div>
+      </div>
+    </div>
+
+    <div class="recipe-layout">
+      <div>
+        <table>
+          <thead><tr><th>Ingredient</th><th>Quantity</th><th>Unit</th></tr></thead>
+          <tbody>
+          {% for ing in ingredients %}
+            <tr>
+              <td>{{ ing['name'] }}</td>
+              <td>{{ ing['display_quantity'] if ing['display_quantity'] is not none else ing['quantity'] }}</td>
+              <td>{{ ing['display_unit'] or ing['unit'] }}</td>
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <div>
+        {% if recipe['image_path'] %}
+          <img class="recipe-photo" src="{{ url_for('uploads', filename=recipe['image_path']) }}" alt="Recipe photo">
+        {% else %}
+          <div class="card" style="height:220px; display:flex; align-items:center; justify-content:center; color:#6b7280;">No photo yet — upload one in Recipe Settings.</div>
+        {% endif %}
+      </div>
+    </div>
+    <div style="margin-top:10px; padding-top:8px; border-top:1px solid #e5e7eb;">
+      <div><strong>Allergens:</strong> {{ recipe['allergens'] or 'None listed' }}</div>
+      <div><strong>Dietary:</strong> {{ recipe['dietary_labels'] or 'None listed' }}</div>
+    </div>
+  </section>
+
+  <h2 class="no-print">Add Ingredient</h2>
+  <form method="post" id="ingredient-form" class="card no-print">
+    <input type="hidden" name="action" value="add">
+    <label>
+      Ingredient
+      <input list="item-options" id="item-search" placeholder="Type to search ingredient..." required>
+      <datalist id="item-options">
+        {% for i in items %}
+        <option value="{{ i['name'] }}" data-id="{{ i['id'] }}" data-unit="{{ i['unit'] }}">
+        {% endfor %}
+      </datalist>
+      <input type="hidden" name="item_id" id="item-id" required>
+    </label>
+
+    <label>
+      Qty used
+      <input name="quantity" type="number" step="0.01" placeholder="Qty used in recipe" required>
+    </label>
+
+    <label>
+      Unit
+      <input list="unit-options" name="display_unit" id="display-unit" placeholder="e.g. lb, oz, cup">
+      <datalist id="unit-options">
+        {% for u in units %}
+        <option value="{{ u }}">
+        {% endfor %}
+      </datalist>
+    </label>
+
+    <label>
+      Unit conversion
+      <input name="conversion_factor" type="number" step="0.0001" value="1" min="0.0001" title="How many item base units are in 1 of the selected unit.">
+    </label>
+
+    <button type="submit">Add</button>
+  </form>
+  <p class="no-print" style="color:#555; margin-top:6px;">Example: if item is priced per lb but you enter oz, use conversion factor 0.0625 (1 oz = 0.0625 lb).</p>
+
+  <h2 class="no-print">Ingredients</h2>
+  {% if not ingredients %}
+    <p class="no-print">No ingredients yet.</p>
+  {% else %}
+  <table class="no-print">
+    <thead><tr><th>Item</th><th>Qty</th><th>Unit</th><th>Conversion</th><th>Base Qty (for cost)</th><th>Cost/Unit</th><th>Line Cost</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for ing in ingredients %}
+      <tr>
+          <td>{{ ing['name'] }}</td>
+          <td>{{ ing['display_quantity'] if ing['display_quantity'] is not none else ing['quantity'] }}</td>
+          <td>{{ ing['display_unit'] or ing['unit'] }}</td>
+          <td>{{ ing['conversion_factor'] if ing['conversion_factor'] is not none else 1 }}</td>
+          <td>{{ '%.4f'|format(ing['quantity']) }} {{ ing['unit'] }}</td>
+          <td>${{ '%.2f'|format(ing['cost_per_unit']) }}</td>
+          <td>${{ '%.2f'|format(ing['quantity'] * ing['cost_per_unit']) }}</td>
+          <td>
+            <form method="post" style="display:inline-flex; gap:6px; align-items:center; flex-wrap:wrap;">
+              <input type="hidden" name="action" value="update">
+              <input type="hidden" name="ingredient_id" value="{{ ing['id'] }}">
+              <input name="quantity" type="number" step="0.01" value="{{ ing['display_quantity'] if ing['display_quantity'] is not none else ing['quantity'] }}" required style="width:80px;">
+              <input name="display_unit" value="{{ ing['display_unit'] or ing['unit'] }}" style="width:70px;">
+              <input name="conversion_factor" type="number" step="0.0001" min="0.0001" value="{{ ing['conversion_factor'] if ing['conversion_factor'] is not none else 1 }}" required style="width:90px;">
+              <button type="submit">Save</button>
+            </form>
+            <form method="post" style="display:inline-block; margin-left:6px;" onsubmit="return confirm('Remove this ingredient?');">
+              <input type="hidden" name="action" value="delete">
+              <input type="hidden" name="ingredient_id" value="{{ ing['id'] }}">
+              <button type="submit">Remove</button>
+            </form>
+          </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+
+  <h2 class="no-print">Cost Summary</h2>
+  <div class="summary-grid no-print">
+    <div class="metric"><div class="metric-label">Total Batch Cost</div><div class="metric-value">${{ '%.2f'|format(total_cost) }}</div></div>
+    <div class="metric"><div class="metric-label">Cost Per Serving</div><div class="metric-value">${{ '%.2f'|format(cost_per_serving) }}</div></div>
+    <div class="metric"><div class="metric-label">Sale Price / Serving</div><div class="metric-value">${{ '%.2f'|format(recipe['sale_price'] or 0) }}</div></div>
+    <div class="metric"><div class="metric-label">Food Cost %</div><div class="metric-value">{% if food_cost_pct is not none %}{{ '%.1f'|format(food_cost_pct) }}%{% else %}—{% endif %}</div></div>
+  </div>
+
+  <script>
+    const itemSearch = document.getElementById('item-search');
+    const itemId = document.getElementById('item-id');
+    const unitInput = document.getElementById('display-unit');
+    const options = Array.from(document.querySelectorAll('#item-options option'));
+
+    function syncIngredientSelection() {
+      const match = options.find(o => o.value.toLowerCase() === itemSearch.value.trim().toLowerCase());
+      if (match) {
+        itemId.value = match.dataset.id;
+        if (!unitInput.value) {
+          unitInput.value = match.dataset.unit || '';
+        }
+      } else {
+        itemId.value = '';
+      }
+    }
+
+    itemSearch.addEventListener('change', syncIngredientSelection);
+    itemSearch.addEventListener('input', syncIngredientSelection);
+
+    document.getElementById('ingredient-form').addEventListener('submit', (e) => {
+      syncIngredientSelection();
+      if (!itemId.value) {
+        e.preventDefault();
+        alert('Pick an ingredient from the dropdown suggestions (you can type to search).');
+      }
+    });
+  </script>
+</body>
+</html>

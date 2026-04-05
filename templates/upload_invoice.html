@@ -1,0 +1,65 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Upload Invoice</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; max-width:840px; }
+    a.button, button { display:inline-block; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; color:#111827; background:#f8fafc; }
+    button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
+  </style>
+</head>
+<body>
+  <h1>Upload Invoice</h1>
+  <p>
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a class="button" href="{{ url_for('inventory') }}">Inventory</a>
+  </p>
+
+  <div class="card">
+    <p>Upload an invoice (<strong>CSV or PDF</strong>) to update inventory on-hand from received quantities.</p>
+    <p style="color:#475569; font-size:14px;">PDF parser templates currently enabled for <strong>Royal</strong> and <strong>Sysco</strong> formats (beta).<br>
+      CSV accepted column aliases:<br>
+      item name: <code>item_name/item/description/product</code><br>
+      qty: <code>qty_received/received_qty/qty/quantity</code><br>
+      unit cost (optional): <code>unit_cost/cost_per_unit/unit_price/price</code>
+    </p>
+
+    <form method="post" enctype="multipart/form-data">
+      <input type="hidden" name="action" value="parse">
+      <input type="file" name="file" accept=".csv,text/csv,application/pdf" required>
+      <button class="primary" type="submit">Parse Invoice</button>
+    </form>
+
+    {% if message %}
+      <p><strong>{{ message }}</strong> {% if applied %}Updated items: {{ applied }}{% endif %}{% if vendor %} | Detected format: {{ vendor|upper }}{% endif %}</p>
+      {% if exception_file %}
+        <p><a class="button" href="{{ url_for('uploads', filename=exception_file) }}">Download Exceptions</a></p>
+      {% endif %}
+    {% endif %}
+
+    {% if review_rows %}
+      <h3>Review Parsed Rows</h3>
+      <table style="width:100%; border-collapse:collapse;">
+        <thead><tr><th style="text-align:left; border-bottom:1px solid #ddd;">Item</th><th style="text-align:left; border-bottom:1px solid #ddd;">Qty Received</th><th style="text-align:left; border-bottom:1px solid #ddd;">Unit Cost</th></tr></thead>
+        <tbody>
+        {% for r in review_rows %}
+          <tr>
+            <td style="padding:6px 4px; border-bottom:1px solid #f0f0f0;">{{ r['item_name'] }}</td>
+            <td style="padding:6px 4px; border-bottom:1px solid #f0f0f0;">{{ r['qty_received'] }}</td>
+            <td style="padding:6px 4px; border-bottom:1px solid #f0f0f0;">{{ r['unit_cost'] or '' }}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <form method="post" style="margin-top:10px;">
+        <input type="hidden" name="action" value="apply">
+        <input type="hidden" name="review_token" value="{{ review_token }}">
+        <input type="hidden" name="vendor" value="{{ vendor }}">
+        <button class="primary" type="submit">Apply Invoice</button>
+      </form>
+    {% endif %}
+  </div>
+</body>
+</html>

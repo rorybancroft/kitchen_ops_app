@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Suggested Order</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f4f4f4; text-align: left; }
+    a.button { display:inline-block; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; color:#111827; background:#f8fafc; margin-right:8px; }
+    a.button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
+  </style>
+</head>
+<body>
+  <h1>Suggested Order List</h1>
+  <p>
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a class="button" href="{{ url_for('inventory') }}">Inventory</a>
+    <a class="button primary" href="{{ url_for('suggested_order_csv') }}">Download CSV</a>
+  </p>
+
+  <div class="card">
+  {% if not suggested %}
+    <p>No items need ordering right now.</p>
+  {% else %}
+  <table>
+    <thead><tr><th>Item</th><th>Vendor</th><th>Qty to Order</th><th>Unit</th><th>Estimated Cost</th></tr></thead>
+    <tbody>
+      {% for s in suggested %}
+      <tr>
+        <td>{{ s['name'] }}</td>
+        <td>{{ s['vendor'] }}</td>
+        <td>{{ s['order_qty'] }}</td>
+        <td>{{ s['unit'] }}</td>
+        <td>${{ '%.2f'|format(s['est_cost']) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  </div>
+</body>
+</html>

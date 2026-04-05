@@ -1,0 +1,76 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Vendors</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
+    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
+    th, td { border: 1px solid #ddd; padding: 8px; }
+    th { background: #f4f4f4; text-align: left; }
+    input { padding:8px; border:1px solid #d1d5db; border-radius:8px; margin-right:6px; margin-bottom:6px; }
+    a.button, button { padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; background:#f8fafc; text-decoration:none; color:#111827; cursor: pointer; }
+    button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
+  </style>
+</head>
+<body>
+  <h1>Vendor Management</h1>
+  <p>
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <a class="button" href="{{ url_for('inventory') }}">Inventory</a>
+  </p>
+
+  <div class="card">
+    <h2 style="margin-top:0;">Add New Vendor</h2>
+    <form method="post">
+      <input type="hidden" name="action" value="add">
+      <input name="name" placeholder="Vendor Name (e.g. Sysco)" required>
+      <input name="rep_name" placeholder="Rep Name">
+      <input name="email" type="email" placeholder="Rep Email">
+      <input name="phone" placeholder="Rep Phone">
+      <input name="notes" placeholder="Delivery days / Notes" style="width:300px;">
+      <button class="primary" type="submit">Add Vendor</button>
+    </form>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;">Vendors Directory</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Vendor Name</th>
+          <th>Rep Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Notes</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for v in vendors %}
+          <tr>
+            <form method="post">
+              <input type="hidden" name="action" value="edit">
+              <input type="hidden" name="vendor_id" value="{{ v['id'] }}">
+              <td><input name="name" value="{{ v['name'] }}" required style="width:120px;"></td>
+              <td><input name="rep_name" value="{{ v['rep_name'] or '' }}" style="width:100px;"></td>
+              <td><input name="email" type="email" value="{{ v['email'] or '' }}" style="width:150px;"></td>
+              <td><input name="phone" value="{{ v['phone'] or '' }}" style="width:120px;"></td>
+              <td><input name="notes" value="{{ v['notes'] or '' }}" style="width:200px;"></td>
+              <td>
+                <button type="submit">Save</button>
+              </form>
+              <form method="post" action="{{ url_for('vendors') }}" onsubmit="return confirm('Delete this vendor?');" style="display:inline-block;">
+                <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="vendor_id" value="{{ v['id'] }}">
+                <button type="submit" style="color:red;">Delete</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
