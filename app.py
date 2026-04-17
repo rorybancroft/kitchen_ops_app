@@ -21,6 +21,11 @@ DIETARY_LABELS = ["Vegan", "Vegetarian"]
 
 app = Flask(__name__)
 app.secret_key = "kitchen-ops-local-secret"
+app.config.update(
+    SESSION_COOKIE_HTTPONLY=True,
+    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SAMESITE="Lax",
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 UPLOADS_DIR = BASE_DIR / "uploads"
@@ -39,7 +44,6 @@ def ensure_inventory_dbs():
     if LEGACY_DB_PATH.exists() and not uga_path.exists():
         shutil.copy2(LEGACY_DB_PATH, uga_path)
 
-
 def current_inventory_key() -> str:
     if has_request_context():
         key = session.get("inventory_key", DEFAULT_INVENTORY)
@@ -47,10 +51,8 @@ def current_inventory_key() -> str:
             return key
     return DEFAULT_INVENTORY
 
-
 def current_db_path() -> Path:
     return INVENTORIES[current_inventory_key()]["db_path"]
-
 
 def list_snapshot_files(inventory_key: str):
     prefix = f"{inventory_key}_snapshot_"
@@ -598,6 +600,7 @@ def inject_inventory_context():
 
 
 @app.route("/inventory/select/<inventory_key>")
+@login_required
 def select_inventory(inventory_key):
     if inventory_key in INVENTORIES:
         session["inventory_key"] = inventory_key
@@ -605,6 +608,7 @@ def select_inventory(inventory_key):
 
 
 @app.route("/")
+@login_required
 def dashboard():
     conn = get_conn()
     items = conn.execute("SELECT * FROM items ORDER BY name").fetchall()
@@ -674,11 +678,13 @@ def setup_wizard():
 
 
 @app.route("/uploads/<path:filename>")
+@login_required
 def uploads(filename):
     return send_from_directory(UPLOADS_DIR, filename)
 
 
 @app.route("/inventory")
+@login_required
 def inventory():
     q = (request.args.get("q") or "").strip()
     vendor = (request.args.get("vendor") or "").strip()
@@ -767,6 +773,7 @@ def inventory():
 
 
 @app.route("/inventory/count-sheet.csv")
+@login_required
 def inventory_count_sheet_csv():
     conn = get_conn()
     items = conn.execute("SELECT id, name, unit, on_hand, vendor FROM items ORDER BY name").fetchall()
@@ -789,6 +796,7 @@ def inventory_count_sheet_csv():
 
 
 @app.route("/inventory/upload-counts", methods=["GET", "POST"])
+@login_required
 def inventory_upload_counts():
     if request.method == "POST":
         f = request.files.get("file")
@@ -887,6 +895,7 @@ def inventory_upload_counts():
 
 
 @app.route("/inventory/upload-invoice", methods=["GET", "POST"])
+@login_required
 def inventory_upload_invoice():
     if request.method == "POST":
         action = request.form.get("action", "parse")
@@ -1070,6 +1079,7 @@ def inventory_upload_invoice():
 
 
 @app.route("/vendors", methods=["GET", "POST"])
+@login_required
 def vendors():
     conn = get_conn()
     if request.method == "POST":
@@ -1115,6 +1125,7 @@ def vendors():
     return render_template("vendors.html", vendors=vendors_list)
 
 @app.route("/items/new", methods=["GET", "POST"])
+@login_required
 def new_item():
     if request.method == "POST":
         name = request.form["name"].strip()
@@ -1139,6 +1150,7 @@ def new_item():
 
 
 @app.route("/items/<int:item_id>/edit", methods=["GET", "POST"])
+@login_required
 def edit_item(item_id):
     conn = get_conn()
     item = conn.execute("SELECT * FROM items WHERE id = ?", (item_id,)).fetchone()
@@ -1173,6 +1185,7 @@ def edit_item(item_id):
 
 
 @app.route("/items/<int:item_id>/delete", methods=["POST"])
+@login_required
 def delete_item(item_id):
     conn = get_conn()
     conn.execute("DELETE FROM items WHERE id = ?", (item_id,))
@@ -1201,12 +1214,14 @@ def build_suggested_rows():
 
 
 @app.route("/orders/suggested")
+@login_required
 def suggested_order():
     suggested = build_suggested_rows()
     return render_template("suggested_order.html", suggested=suggested)
 
 
 @app.route("/inventory/transfers", methods=["GET", "POST"])
+@login_required
 def inventory_transfers():
     month = (request.args.get("month") or datetime.now().strftime("%Y-%m"))
 
@@ -1336,6 +1351,7 @@ def inventory_transfers():
 
 
 @app.route("/inventory/transfers/<int:transfer_id>/delete", methods=["POST"])
+@login_required
 def delete_inventory_transfer(transfer_id):
     month = request.args.get("month") or datetime.now().strftime("%Y-%m")
     conn = get_conn()
@@ -1346,6 +1362,7 @@ def delete_inventory_transfer(transfer_id):
 
 
 @app.route("/inventory/snapshots")
+@login_required
 def inventory_snapshots():
     conn = get_conn()
     months = conn.execute("SELECT DISTINCT snapshot_month, snapshot_date FROM inventory_snapshots ORDER BY snapshot_date DESC").fetchall()
@@ -1363,6 +1380,7 @@ def inventory_snapshots():
     return render_template("inventory_snapshots.html", months=months, snapshots=snapshots, selected_month=selected_month, total_value=total_value)
 
 @app.route("/inventory/close_month", methods=["POST"])
+@login_required
 def close_month():
     conn = get_conn()
     month_name = request.form.get("month_name", datetime.now().strftime("%B %Y")).strip()
@@ -1385,6 +1403,7 @@ def close_month():
 
 
 @app.route("/waste")
+@login_required
 def waste_log():
     month = (request.args.get("month") or datetime.now().strftime("%Y-%m"))
     
@@ -1414,6 +1433,7 @@ def waste_log():
     )
 
 @app.route("/waste/add", methods=["POST"])
+@login_required
 def waste_add():
     conn = get_conn()
     item_id = int(request.form["item_id"])
@@ -1444,6 +1464,7 @@ def waste_add():
     return redirect(url_for("waste_log", month=month))
 
 @app.route("/waste/<int:waste_id>/delete", methods=["POST"])
+@login_required
 def delete_waste(waste_id):
     month = request.args.get("month") or datetime.now().strftime("%Y-%m")
     conn = get_conn()
@@ -1454,6 +1475,7 @@ def delete_waste(waste_id):
 
 @app.route("/menus/builder", methods=["GET", "POST"])
 @app.route("/orders/from-menu", methods=["GET", "POST"])
+@login_required
 def order_from_menu():
     results = []
     missing = []
@@ -1704,6 +1726,7 @@ def order_from_menu():
 
 
 @app.route("/orders/suggested.csv")
+@login_required
 def suggested_order_csv():
     suggested = build_suggested_rows()
 
@@ -1721,6 +1744,7 @@ def suggested_order_csv():
 
 
 @app.route("/recipes", methods=["GET", "POST"])
+@login_required
 def recipes():
     conn = get_conn()
     if request.method == "POST":
@@ -1756,6 +1780,7 @@ def recipes():
 
 
 @app.route("/recipes/<int:recipe_id>/delete", methods=["POST"])
+@login_required
 def delete_recipe(recipe_id):
     conn = get_conn()
     conn.execute("DELETE FROM recipe_ingredients WHERE recipe_id = ?", (recipe_id,))
@@ -1766,6 +1791,7 @@ def delete_recipe(recipe_id):
 
 
 @app.route("/recipes/<int:recipe_id>", methods=["GET", "POST"])
+@login_required
 def recipe_detail(recipe_id):
     conn = get_conn()
 
@@ -1897,6 +1923,7 @@ def recipe_detail(recipe_id):
 
 
 @app.route("/reports/month_end")
+@login_required
 def month_end_summary():
     conn = get_conn()
     month_val = request.args.get("month", datetime.now().strftime("%Y-%m"))
@@ -1939,6 +1966,7 @@ def month_end_summary():
     )
 
 @app.route("/purchases", methods=["GET", "POST"])
+@login_required
 def purchases():
     conn = get_conn()
     month = request.args.get("month", datetime.now().strftime("%Y-%m"))
