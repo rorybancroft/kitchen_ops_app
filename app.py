@@ -20,16 +20,18 @@ DIETARY_LABELS = ["Vegan", "Vegetarian"]
 
 app = Flask(__name__)
 app.secret_key = "kitchen-ops-local-secret"
+
 BASE_DIR = Path(__file__).resolve().parent
 UPLOADS_DIR = BASE_DIR / "uploads"
+PERSIST_DIR = Path(os.environ.get("RENDER_DISK_PATH", str(BASE_DIR)))
+PERSIST_DIR.mkdir(parents=True, exist_ok=True)
 
 INVENTORIES = {
-    "uga": {"label": "UGA", "db_path": BASE_DIR / "kitchen_ops_uga.db"},
-    "mrra": {"label": "MRRA", "db_path": BASE_DIR / "kitchen_ops_mrra.db"},
+    "uga": {"label": "UGA", "db_path": PERSIST_DIR / "kitchen_ops_uga.db"},
+    "mrra": {"label": "MRRA", "db_path": PERSIST_DIR / "kitchen_ops_mrra.db"},
 }
 DEFAULT_INVENTORY = "uga"
-LEGACY_DB_PATH = BASE_DIR / "kitchen_ops.db"
-
+LEGACY_DB_PATH = PERSIST_DIR / "kitchen_ops.db"
 
 def ensure_inventory_dbs():
     uga_path = INVENTORIES["uga"]["db_path"]
