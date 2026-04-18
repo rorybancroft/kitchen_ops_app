@@ -60,7 +60,7 @@ def login_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if not session.get("user_id"):
-            return redirect(url_for("setup_wizard", next=request.path))
+            return redirect(url_for("setup_wizard"))
         return view(*args, **kwargs)
 
     return wrapped
