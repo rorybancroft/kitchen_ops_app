@@ -636,6 +636,24 @@ def login():
     conn.close()
     return render_template("login.html")
 
+@app.route("/admin/reset-password-temp")
+def admin_reset_password_temp():
+    email = request.args.get("email", "").strip().lower()
+    new_pw = request.args.get("pw", "").strip()
+    if not email or not new_pw:
+        return "Usage: /admin/reset-password-temp?email=you@example.com&pw=NewPass123!", 400
+
+    conn = get_conn()
+    cur = conn.cursor()
+    cur.execute(
+        "UPDATE users SET password_hash=? WHERE lower(email)=?",
+        (generate_password_hash(new_pw), email),
+    )
+    conn.commit()
+    updated = cur.rowcount
+    conn.close()
+    return f"Password reset rows updated: {updated}"
+
 @app.context_processor
 def inject_inventory_context():
     key = current_inventory_key()
