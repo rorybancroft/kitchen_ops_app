@@ -54,13 +54,24 @@ def current_inventory_key() -> str:
 def current_db_path() -> Path:
     return INVENTORIES[current_inventory_key()]["db_path"]
 
+def has_any_user() -> bool:
+    conn = sqlite3.connect(INVENTORIES[DEFAULT_INVENTORY]["db_path"])
+    conn.row_factory = sqlite3.Row
+    try:
+        row = conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()
+        return bool(row and row["c"] > 0)
+    except sqlite3.OperationalError:
+        return False
+    finally:
+        conn.close()
+
 def login_required(view):
     from functools import wraps
 
     @wraps(view)
     def wrapped(*args, **kwargs):
         if has_any_user() and not session.get("user_id"):
-            return redirect(url_for("login_route_name"))
+            return redirect(url_for("setup_wizard"))
         return view(*args, **kwargs)
 
     return wrapped
