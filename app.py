@@ -11,6 +11,7 @@ import shutil
 from pathlib import Path
 from typing import Optional
 from werkzeug.utils import secure_filename
+from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
 from collections import defaultdict
 
@@ -638,12 +639,13 @@ def login():
 
 @app.route("/admin/reset-password-temp")
 def admin_reset_password_temp():
-    email = request.args.get("email", "").strip().lower()
-    new_pw = request.args.get("pw", "").strip()
+    email = (request.args.get("email") or "").strip().lower()
+    new_pw = (request.args.get("pw") or "").strip()
     if not email or not new_pw:
         return "Usage: /admin/reset-password-temp?email=you@example.com&pw=NewPass123!", 400
 
-    conn = get_conn()
+    conn = sqlite3.connect(INVENTORIES[DEFAULT_INVENTORY]["db_path"])
+    conn.row_factory = sqlite3.Row
     cur = conn.cursor()
     cur.execute(
         "UPDATE users SET password_hash=? WHERE lower(email)=?",
