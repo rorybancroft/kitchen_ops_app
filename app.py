@@ -54,6 +54,17 @@ def current_inventory_key() -> str:
 def current_db_path() -> Path:
     return INVENTORIES[current_inventory_key()]["db_path"]
 
+def login_required(view):
+    from functools import wraps
+
+    @wraps(view)
+    def wrapped(*args, **kwargs):
+        if not session.get("user_id"):
+            return redirect(url_for("login", next=request.path))
+        return view(*args, **kwargs)
+
+    return wrapped
+
 def list_snapshot_files(inventory_key: str):
     prefix = f"{inventory_key}_snapshot_"
     files = []
