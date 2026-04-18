@@ -71,7 +71,7 @@ def login_required(view):
     @wraps(view)
     def wrapped(*args, **kwargs):
         if not session.get("user_id"):
-            return redirect(url_for("setup_wizard"))
+            return redirect(url_for("login", next=request.path))
         return view(*args, **kwargs)
 
     return wrapped
@@ -610,6 +610,31 @@ def init_db(db_path: Path | None = None):
     conn.commit()
     conn.close()
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    conn = sqlite3.connect(INVENTORIES[DEFAULT_INVENTORY]["db_path"])
+    conn.row_factory = sqlite3.Row
+
+    if request.method == "POST":
+        email = (request.form.get("email") or "").strip().lower()
+        password = request.form.get("password") or ""
+
+        row = conn.execute(
+            "SELECT id, email, password_hash FROM users WHERE lower(email)=?",
+            (email,),
+        ).fetchone()
+
+        if row and check_password_hash(row["password_hash"], password):
+            session["user_id"] = row["id"]
+            session["user_email"] = row["email"]
+            conn.close()
+            return redirect(url_for("dashboard"))
+
+        conn.close()
+        return render_template("login.html", error="Invalid email or password")
+
+    conn.close()
+    return render_template("login.html")
 
 @app.context_processor
 def inject_inventory_context():
