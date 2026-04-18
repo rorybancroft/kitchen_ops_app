@@ -20,7 +20,7 @@ COMMON_ALLERGENS = [
 DIETARY_LABELS = ["Vegan", "Vegetarian"]
 
 app = Flask(__name__)
-app.secret_key = "kitchen-ops-local-secret"
+app.secret_key = os.environ.get("KITCHEN_OPS_SECRET_KEY") or "dev-only-secret"
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SECURE=True,
