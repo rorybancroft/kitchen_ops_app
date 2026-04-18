@@ -637,44 +637,7 @@ def login():
     conn.close()
     return render_template("login.html")
 
-@app.route("/admin/reset-password-temp")
-def admin_reset_password_temp():
-    email = (request.args.get("email") or "").strip().lower()
-    new_pw = (request.args.get("pw") or "").strip()
-    if not email or not new_pw:
-        return "Usage: /admin/reset-password-temp?email=you@example.com&pw=NewPass123!", 400
 
-    db_path = INVENTORIES[DEFAULT_INVENTORY]["db_path"]
-    conn = sqlite3.connect(str(db_path))
-    conn.row_factory = sqlite3.Row
-    cur = conn.cursor()
-
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT UNIQUE NOT NULL,
-            password_hash TEXT NOT NULL,
-            display_name TEXT
-        )
-    """)
-
-    cur.execute("SELECT id FROM users WHERE lower(email)=?", (email,))
-    row = cur.fetchone()
-
-    if row:
-        cur.execute(
-            "UPDATE users SET password_hash=? WHERE lower(email)=?",
-            (generate_password_hash(new_pw), email),
-        )
-    else:
-        cur.execute(
-            "INSERT INTO users (email, password_hash, display_name) VALUES (?, ?, ?)",
-            (email, generate_password_hash(new_pw), email.split('@')[0]),
-        )
-
-    conn.commit()
-    conn.close()
-    return "Password reset/created successfully"
 
 @app.context_processor
 def inject_inventory_context():
