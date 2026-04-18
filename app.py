@@ -655,6 +655,8 @@ def dashboard():
 
 @app.route("/setup")
 def setup_wizard():
+    if has_any_user() and not session.get("user_id"):
+        return redirect(url_for("setup_wizard"))
     conn = get_conn()
     item_count = conn.execute("SELECT COUNT(*) AS c FROM items").fetchone()["c"]
     recipe_count = conn.execute("SELECT COUNT(*) AS c FROM recipes").fetchone()["c"]
