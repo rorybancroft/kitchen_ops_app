@@ -1,154 +1,326 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>MIRA Dashboard</title>
-  <style>
-    :root { --glass: rgba(255,255,255,.9); --dark:#1f2937; --accent:#f97316; }
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      color: var(--dark);
-      background:
-        radial-gradient(circle at 20% 20%, rgba(255,255,255,.04), rgba(255,255,255,0) 35%),
-        radial-gradient(circle at 80% 70%, rgba(255,255,255,.03), rgba(255,255,255,0) 40%),
-        linear-gradient(rgba(6,10,14,.86), rgba(6,10,14,.86)),
-        url('https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=2000&q=60') center/cover fixed;
-      min-height: 100vh;
-    }
-    .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 20px; position: relative; }
-    .hero { position: relative; z-index: 2; background: var(--glass); border-radius: 16px; padding: 22px; box-shadow: 0 12px 30px rgba(0,0,0,.2); }
-    .bg-photos {
-      position: absolute;
-      right: 20px;
-      top: 24px;
-      display: grid;
-      grid-template-columns: repeat(3, 120px);
-      gap: 10px;
-      z-index: 1;
-    }
-    .bg-photo {
-      height: 85px;
-      border-radius: 10px;
-      border: 1px dashed rgba(255,255,255,.35);
-      background-size: cover;
-      background-position: center;
-      box-shadow: 0 8px 20px rgba(0,0,0,.20);
-      opacity: .3;
-      filter: grayscale(1) contrast(1.25) brightness(1.05);
-      mix-blend-mode: screen;
-    }
-    h1 { margin: 0 0 8px; }
-    .sub { color:#4b5563; margin:0; }
-    .inv-switch { margin-top: 12px; display:flex; align-items:center; gap:8px; }
-    .inv-switch select, .inv-switch button { padding:6px 10px; border-radius:8px; border:1px solid #d1d5db; }
-    .inv-tag { display:inline-block; background:#111827; color:#fff; font-size:12px; border-radius:999px; padding:4px 10px; margin-left:8px; }
-    .grid { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 12px; margin-top: 18px; }
-    .metric { background:#fff; border-radius: 12px; padding: 12px; border:1px solid #e5e7eb; }
-    .label { font-size: 12px; color:#6b7280; text-transform: uppercase; }
-    .value { font-size: 24px; font-weight: 700; margin-top: 4px; }
-    .nav { position: relative; z-index: 2; display:grid; grid-template-columns: repeat(2, minmax(220px,1fr)); gap:12px; margin-top:18px; }
-    .card-link {
-      display:block; text-decoration:none; color:inherit; background:var(--glass);
-      border:1px solid #e5e7eb; border-radius:14px; padding:16px;
-      transition:.15s transform ease, .15s box-shadow ease;
-    }
-    .card-link:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.18); }
-    .card-link h3 { margin:0 0 6px; }
-    .pill { display:inline-block; margin-top:10px; font-size:12px; color:#fff; background:var(--accent); padding:4px 8px; border-radius:999px; }
-    @media (max-width: 800px) {
-      .grid { grid-template-columns: repeat(2, 1fr); }
-      .nav { grid-template-columns: 1fr; }
-      .bg-photos { display:none; }
-    }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div class="bg-photos" aria-hidden="true">
-      <div class="bg-photo" title="Vegetables" style="background-image:url('https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=70');"></div>
-      <div class="bg-photo" title="Meats" style="background-image:url('https://images.unsplash.com/photo-1603048297172-c92544798d5a?auto=format&fit=crop&w=600&q=70');"></div>
-      <div class="bg-photo" title="Beef cuts" style="background-image:url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Beef_Cuts.svg/1024px-Beef_Cuts.svg.png'); background-color:#fff;"></div>
-    </div>
-    <section class="hero">
-      <h1>MIRA <span class="inv-tag">{{ active_inventory_label }}</span></h1>
-      <p class="sub">Menu, Inventory &amp; Recipe Analytics</p>
-      <p class="sub" style="margin-top:6px;">Command center — jump to inventory, recipes, vendors, and ordering.</p>
-      {% if first_run %}
-      <p style="margin-top:10px;"><a class="pill" style="text-decoration:none;" href="{{ url_for('setup_wizard') }}">Start First-Run Setup Wizard</a></p>
-      {% endif %}
-      <form class="inv-switch" method="post" id="inventory-switcher">
-        <label for="inv">Inventory:</label>
-        <select id="inv" name="inv" onchange="window.location.href='/inventory/select/' + this.value;">
-          {% for key, label in inventory_options %}
-            <option value="{{ key }}" {% if key == active_inventory_key %}selected{% endif %}>{{ label }}</option>
-          {% endfor %}
-        </select>
-      </form>
+{% extends "base.html" %}
 
-      <div class="grid">
-        <div class="metric"><div class="label">Inventory Value</div><div class="value">${{ '%.2f'|format(total_value) }}</div></div>
-        <div class="metric"><div class="label">Items</div><div class="value">{{ item_count }}</div></div>
-        <div class="metric"><div class="label">Recipes</div><div class="value">{{ recipe_count }}</div></div>
-        <div class="metric"><div class="label">Low Stock</div><div class="value">{{ low_stock_count }}</div></div>
+{% block title %}MIRA Dashboard{% endblock %}
+
+{% block extra_head %}
+<style>
+  body {
+    background:
+      linear-gradient(rgba(10, 15, 18, 0.72), rgba(10, 15, 18, 0.82)),
+      radial-gradient(circle at 18% 18%, rgba(249, 115, 22, 0.16), transparent 24%),
+      radial-gradient(circle at 82% 28%, rgba(14, 165, 233, 0.12), transparent 22%),
+      url('https://images.unsplash.com/photo-1515003197210-e0cd71810b5f?auto=format&fit=crop&w=2000&q=80') center/cover fixed;
+  }
+  .dashboard-shell { position: relative; }
+  .dashboard-shell::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 28px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    pointer-events: none;
+  }
+  .hero {
+    position: relative;
+    overflow: hidden;
+    border-radius: 28px;
+    border: 1px solid rgba(255,255,255,0.16);
+    background: linear-gradient(135deg, rgba(255,255,255,0.86), rgba(248,250,252,0.78));
+    backdrop-filter: blur(16px);
+    box-shadow: 0 24px 60px rgba(0,0,0,0.22);
+    padding: 28px;
+  }
+  .hero::after {
+    content: "";
+    position: absolute;
+    right: -80px;
+    top: -80px;
+    width: 260px;
+    height: 260px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(249,115,22,0.22), rgba(249,115,22,0));
+  }
+  .hero-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 18px;
+    align-items: flex-start;
+  }
+  .hero-copy {
+    max-width: 720px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-copy h1 {
+    margin: 0;
+    font-size: clamp(34px, 5vw, 56px);
+    letter-spacing: -0.05em;
+    color: #0f172a;
+  }
+  .hero-copy p {
+    margin: 10px 0 0;
+    color: #475569;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+  .inv-tag {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    background:#111827;
+    color:#fff;
+    font-size:12px;
+    border-radius:999px;
+    padding:6px 12px;
+    margin-left:10px;
+    vertical-align: middle;
+  }
+  .hero-panel {
+    min-width: 280px;
+    padding: 18px;
+    border-radius: 20px;
+    background: rgba(15, 23, 42, 0.82);
+    color: #e5eef8;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+    position: relative;
+    z-index: 1;
+  }
+  .hero-panel h3 { margin: 0 0 8px; font-size: 15px; color: #fff; }
+  .hero-panel p { margin: 0; font-size: 14px; color: #cbd5e1; line-height: 1.5; }
+  .inv-switch { margin-top: 18px; display:flex; align-items:center; gap:10px; flex-wrap: wrap; position:relative; z-index:1; }
+  .inv-switch label { color:#334155; font-weight:700; }
+  .inv-switch select { max-width: 220px; }
+  .hero-actions { margin-top: 16px; display:flex; gap:10px; flex-wrap:wrap; position:relative; z-index:1; }
+  .quick-grid {
+    display:grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap:14px;
+    margin-top: 22px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero-tile {
+    display:block;
+    text-decoration:none;
+    color:#0f172a;
+    background: rgba(255,255,255,0.88);
+    border: 1px solid rgba(148,163,184,0.22);
+    border-radius: 18px;
+    padding: 16px;
+    box-shadow: 0 14px 28px rgba(15,23,42,0.08);
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .hero-tile:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 32px rgba(15,23,42,0.12);
+    background: rgba(255,255,255,0.95);
+  }
+  .hero-tile-label {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #64748b;
+  }
+  .hero-tile-title {
+    margin-top: 8px;
+    font-size: 18px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+  }
+  .hero-tile-copy {
+    margin-top: 6px;
+    color: #475569;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+  .metric {
+    background: rgba(255,255,255,0.88);
+    border-color: rgba(148,163,184,0.22);
+    box-shadow: 0 14px 28px rgba(15,23,42,0.08);
+  }
+  .metric .metric-value { font-size: 30px; }
+  .section-title {
+    margin: 26px 0 12px;
+    color: rgba(255,255,255,0.92);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: .14em;
+  }
+  .month-summary-grid {
+    display:grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap:12px;
+    margin-top: 14px;
+  }
+  .month-mini {
+    border-radius: 16px;
+    padding: 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+  .month-mini .metric-label { color:#cbd5e1; }
+  .month-mini .metric-value { font-size: 24px; color:#fff; }
+  .nav-grid {
+    display:grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap:14px;
+  }
+  .card-link {
+    display:block;
+    text-decoration:none;
+    color:inherit;
+    border-radius: 22px;
+    padding: 20px;
+    background: rgba(255,255,255,0.9);
+    border: 1px solid rgba(255,255,255,0.16);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 18px 34px rgba(0,0,0,0.16);
+    transition: transform .18s ease, box-shadow .18s ease, background .18s ease;
+  }
+  .card-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 22px 38px rgba(0,0,0,0.22);
+    background: rgba(255,255,255,0.96);
+  }
+  .card-link h3 { margin:0 0 8px; font-size: 20px; letter-spacing:-0.03em; }
+  .card-link p { margin:0; color:#475569; line-height:1.55; }
+  .pill { display:inline-flex; margin-top:12px; font-size:12px; color:#fff; background:linear-gradient(135deg, #f97316, #ea580c); padding:5px 10px; border-radius:999px; font-weight:700; }
+  .pill.green { background: linear-gradient(135deg, #10b981, #059669); }
+  .pill.blue { background: linear-gradient(135deg, #3b82f6, #2563eb); }
+  @media (max-width: 1000px) {
+    .hero-top, .nav-grid, .quick-grid, .month-grid { grid-template-columns: 1fr; }
+    .hero-top { flex-direction: column; }
+    .hero-panel { min-width: 0; width: 100%; }
+    .nav-grid { grid-template-columns: 1fr 1fr; }
+    .quick-grid { grid-template-columns: 1fr 1fr; }
+    .month-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 680px) {
+    .nav-grid, .quick-grid { grid-template-columns: 1fr; }
+    .hero { padding: 22px; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-shell">
+  <section class="hero">
+    <div class="hero-top">
+      <div class="hero-copy">
+        <h1>MIRA <span class="inv-tag">{{ active_inventory_label }}</span></h1>
+        <p>Menu, Inventory and Recipe Analytics for a kitchen that needs to move fast, stay organized, and print clean tools for the team.</p>
+        <p>Command center for inventory, recipes, vendors, ordering, and reporting.</p>
+        <form class="inv-switch" method="post" id="inventory-switcher">
+          <label for="inv">Inventory</label>
+          <select id="inv" name="inv" onchange="window.location.href='/inventory/select/' + this.value;">
+            {% for key, label in inventory_options %}
+              <option value="{{ key }}" {% if key == active_inventory_key %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        <div class="hero-actions">
+          {% if first_run %}
+            <a class="button primary" href="{{ url_for('setup_wizard') }}">Start First-Run Setup</a>
+          {% endif %}
+          <a class="button" href="{{ url_for('recipes') }}">Open Recipes</a>
+          <a class="button" href="{{ url_for('inventory') }}">View Inventory</a>
+        </div>
       </div>
-    </section>
+      <aside class="hero-panel">
+        <h3>{{ current_month_label }}</h3>
+        <p>Current month snapshot with live purchasing and operating signals right in the hero.</p>
+        <div class="month-summary-grid">
+          <div class="month-mini">
+            <div class="metric-label">Purchases</div>
+            <div class="metric-value">${{ '%.2f'|format(purchases_total) }}</div>
+          </div>
+          <div class="month-mini">
+            <div class="metric-label">Waste</div>
+            <div class="metric-value">${{ '%.2f'|format(waste_total) }}</div>
+          </div>
+          <div class="month-mini">
+            <div class="metric-label">Purchase Entries</div>
+            <div class="metric-value">{{ purchase_count }}</div>
+          </div>
+          <div class="month-mini">
+            <div class="metric-label">Transfers</div>
+            <div class="metric-value">{{ transfers_count }}</div>
+          </div>
+          <div class="month-mini">
+            <div class="metric-label">Inventory Value</div>
+            <div class="metric-value">${{ '%.2f'|format(total_value) }}</div>
+          </div>
+          <div class="month-mini">
+            <div class="metric-label">Low Stock</div>
+            <div class="metric-value">{{ low_stock_count }}</div>
+          </div>
+        </div>
+      </aside>
+    </div>
 
-    <section class="nav">
-      <a class="card-link" href="{{ url_for('setup_wizard') }}">
-        <h3>Setup Wizard</h3>
-        <p>First-run onboarding: import inventory, build recipes, and launch menu ordering.</p>
+      <div class="quick-grid">
+      <a class="hero-tile" href="{{ url_for('inventory') }}">
+        <div class="hero-tile-label">Core</div>
+        <div class="hero-tile-title">Inventory</div>
+        <div class="hero-tile-copy">Check stock, values, reorder points, and close out the month cleanly.</div>
       </a>
-      <a class="card-link" href="{{ url_for('inventory') }}">
-        <h3>Inventory</h3>
-        <p>View stock on hand, filter by vendor, and edit item levels.</p>
+      <a class="hero-tile" href="{{ url_for('recipes') }}">
+        <div class="hero-tile-label">Core</div>
+        <div class="hero-tile-title">Recipes</div>
+        <div class="hero-tile-copy">Manage recipe cards, food cost, kitchen methods, and Spanish print mode.</div>
       </a>
-      <a class="card-link" href="{{ url_for('new_item') }}">
-        <h3>Add Item</h3>
-        <p>Create a new ingredient/item in the inventory catalog.</p>
+      <a class="hero-tile" href="{{ url_for('order_from_menu') }}">
+        <div class="hero-tile-label">Planning</div>
+        <div class="hero-tile-title">Menu Builder</div>
+        <div class="hero-tile-copy">Scale menus by servings or guest count and build vendor-ready orders fast.</div>
       </a>
-      <a class="card-link" href="{{ url_for('suggested_order') }}">
-        <h3>Suggested Orders</h3>
-        <p>Auto-calc what to order based on reorder levels and on-hand qty.</p>
+      <a class="hero-tile" href="{{ url_for('month_end_summary') }}">
+        <div class="hero-tile-label">Reporting</div>
+        <div class="hero-tile-title">Month End</div>
+        <div class="hero-tile-copy">See the combined purchases, waste, transfers, and inventory picture.</div>
       </a>
-      <a class="card-link" href="{{ url_for('order_from_menu') }}">
-        <h3>Menu Builder</h3>
-        <p>Build menus from recipes, scale servings, and generate vendor-ready purchase orders.</p>
+      <a class="hero-tile" href="{{ url_for('setup_wizard') }}">
+        <div class="hero-tile-label">Setup</div>
+        <div class="hero-tile-title">Setup Wizard</div>
+        <div class="hero-tile-copy">Walk new operations from import to recipes, menus, and ordering.</div>
       </a>
-      <a class="card-link" href="{{ url_for('inventory_transfers') }}">
-        <h3>Inventory Transfers</h3>
-        <p>Track items moved off inventory with from/to and monthly printout.</p>
+      <a class="hero-tile" href="{{ url_for('new_item') }}">
+        <div class="hero-tile-label">Catalog</div>
+        <div class="hero-tile-title">Add Item</div>
+        <div class="hero-tile-copy">Create a new ingredient or product in the inventory catalog.</div>
       </a>
-      <a class="card-link" href="{{ url_for('inventory_upload_invoice') }}">
-        <h3>Upload Invoice</h3>
-        <p>Import invoice CSV lines to increment on-hand and refresh costs.</p>
+      <a class="hero-tile" href="{{ url_for('suggested_order') }}">
+        <div class="hero-tile-label">Ordering</div>
+        <div class="hero-tile-title">Suggested Orders</div>
+        <div class="hero-tile-copy">Auto-calculate what to order based on reorder levels and on-hand quantity.</div>
       </a>
-      <a class="card-link" href="{{ url_for('waste_log') }}">
-        <h3>Waste Tracking</h3>
-        <p>Log spoiled or dropped items, calculate financial loss, and print monthly valuations.</p>
-        <span class="pill">New</span>
+      <a class="hero-tile" href="{{ url_for('inventory_transfers') }}">
+        <div class="hero-tile-label">Movement</div>
+        <div class="hero-tile-title">Transfers</div>
+        <div class="hero-tile-copy">Track product moved off inventory with notes and monthly printouts.</div>
       </a>
-      <a class="card-link" href="{{ url_for('recipes') }}">
-        <h3>Recipe Costing</h3>
-        <p>Build recipes, set sale price, and track food cost %.</p>
-        <span class="pill">Popular</span>
+      <a class="hero-tile" href="{{ url_for('inventory_upload_invoice') }}">
+        <div class="hero-tile-label">Receiving</div>
+        <div class="hero-tile-title">Upload Invoice</div>
+        <div class="hero-tile-copy">Import invoice lines to update on-hand counts and refresh costs.</div>
       </a>
-      <a class="card-link" href="{{ url_for('vendors') }}">
-        <h3>Vendor Management</h3>
-        <p>Add and manage your suppliers, sales reps, and delivery info.</p>
-        <span class="pill">New</span>
+      <a class="hero-tile" href="{{ url_for('waste_log') }}">
+        <div class="hero-tile-label">Control</div>
+        <div class="hero-tile-title">Waste Tracking</div>
+        <div class="hero-tile-copy">Log spoilage, dropped product, and monthly waste value.</div>
       </a>
-      <a class="card-link" href="{{ url_for('purchases') }}">
-        <h3>Purchases Log</h3>
-        <p>Track your monthly spending, log invoices, and view totals.</p>
-        <span class="pill" style="background-color: #059669;">New</span>
+      <a class="hero-tile" href="{{ url_for('vendors') }}">
+        <div class="hero-tile-label">Partners</div>
+        <div class="hero-tile-title">Vendors</div>
+        <div class="hero-tile-copy">Manage supplier contacts, reps, and delivery details.</div>
       </a>
-      <a class="card-link" href="{{ url_for('month_end_summary') }}">
-        <h3>Month End Summary</h3>
-        <p>Combine purchases, waste, transfers, and inventory into one report.</p>
-        <span class="pill" style="background-color: #2563eb;">Report</span>
+      <a class="hero-tile" href="{{ url_for('purchases') }}">
+        <div class="hero-tile-label">Finance</div>
+        <div class="hero-tile-title">Purchases</div>
+        <div class="hero-tile-copy">Review monthly spending, invoice logs, and vendor totals.</div>
       </a>
-    </section>
-  </div>
-</body>
-</html>
+    </div>
+  </section>
+
+</div>
+{% endblock %}

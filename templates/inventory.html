@@ -1,121 +1,130 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Inventory</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background: #f4f4f4; text-align: left; }
-    .alert { color: #b00020; font-weight: bold; }
-    a.button, button { display: inline-block; padding: 8px 12px; margin-right: 8px; background: #f8fafc; color: #111827; text-decoration: none; border:1px solid #d1d5db; border-radius: 8px; }
-    a.button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
-    input, select { padding:8px; border:1px solid #d1d5db; border-radius:8px; }
-    @media print {
-      body { margin: 0; background: #fff; color:#000; }
-      .no-print { display: none !important; }
-      .card { border: none; box-shadow: none; padding: 0; margin-bottom: 12px; }
-      table { font-size: 11px; }
-      th, td { padding: 6px; }
-      a { color: #000; text-decoration: none; }
-    }
-  </style>
-</head>
-<body>
-  <h1>Inventory</h1>
-  <p class="no-print" style="margin-bottom: 8px;">
+{% extends "base.html" %}
+
+{% block title %}Inventory{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>Inventory</h1>
+    <p>Track on-hand levels, spot low stock quickly, and manage monthly closeouts without the clutter.</p>
+  </div>
+  <div class="nav-pills no-print">
     <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
     <a class="button" href="{{ url_for('recipes') }}">Recipes</a>
     <button type="button" onclick="window.print()">Print Sheet</button>
     {% if not readonly_mode %}
-      <a class="button" href="{{ url_for('inventory_count_sheet_csv') }}">Download Count Sheet CSV</a>
-      <a class="button" href="{{ url_for('inventory_upload_counts') }}">Upload Counted CSV</a>
+      <a class="button" href="{{ url_for('inventory_count_sheet_csv') }}">Count Sheet CSV</a>
+      <a class="button" href="{{ url_for('inventory_upload_counts') }}">Upload Counts</a>
       <a class="button" href="{{ url_for('inventory_upload_invoice') }}">Upload Invoice</a>
-      <a class="button" href="{{ url_for('inventory_transfers') }}">Inventory Transfers</a>
+      <a class="button" href="{{ url_for('inventory_transfers') }}">Transfers</a>
       <a class="button primary" href="{{ url_for('new_item') }}">Add Item</a>
     {% endif %}
-  </p>
-  
-  {% if not readonly_mode %}
-  <div class="card no-print" style="margin-bottom: 24px; display: inline-block;">
-    <form action="{{ url_for('close_month') }}" method="POST" onsubmit="return confirm('Are you sure you want to close the month and save this inventory snapshot?');" style="display: flex; gap: 8px; align-items: center;">
-      <label><b>Close Out Month:</b></label>
-      <input type="text" name="month_name" placeholder="e.g. March 2026" required>
-      <button class="button primary" type="submit">Save Snapshot</button>
-      <a class="button" href="{{ url_for('inventory_snapshots') }}">View Past Months</a>
-    </form>
   </div>
-  {% endif %}
+</div>
 
-  <div class="card no-print">
-    <form method="get" action="{{ url_for('inventory') }}">
-      <input type="text" name="q" placeholder="Search item name" value="{{ q }}" style="width:220px;">
+{% if not readonly_mode %}
+<div class="card no-print">
+  <div class="section-head">
+    <div>
+      <h2>Month Closeout</h2>
+      <p>Save a clean inventory snapshot before rolling into the next period.</p>
+    </div>
+  </div>
+  <form action="{{ url_for('close_month') }}" method="POST" onsubmit="return confirm('Are you sure you want to close the month and save this inventory snapshot?');" class="action-row">
+    <label style="min-width:260px;">
+      Close out month
+      <input type="text" name="month_name" placeholder="e.g. March 2026" required>
+    </label>
+    <button class="primary" type="submit">Save Snapshot</button>
+    <a class="button" href="{{ url_for('inventory_snapshots') }}">View Past Months</a>
+  </form>
+</div>
+{% endif %}
+
+<div class="card no-print">
+  <form method="get" action="{{ url_for('inventory') }}" class="grid-3">
+    <label>
+      Search item name
+      <input type="text" name="q" placeholder="Search item name" value="{{ q }}">
+    </label>
+    <label>
+      Vendor
       <select name="vendor">
         <option value="">All vendors</option>
         {% for v in vendors %}
         <option value="{{ v }}" {% if vendor == v %}selected{% endif %}>{{ v }}</option>
         {% endfor %}
       </select>
+    </label>
+    <label>
+      Month
       <select name="month">
         {% for m_val, m_label in month_options %}
         <option value="{{ m_val }}" {% if month == m_val %}selected{% endif %}>{{ m_label }}</option>
         {% endfor %}
       </select>
-      <button type="submit">Filter</button>
-      <a href="{{ url_for('inventory', month=month) }}" style="margin-left:8px;">Clear</a>
-    </form>
-  </div>
+    </label>
+    <div class="action-row" style="grid-column:1 / -1;">
+      <button type="submit" class="primary">Apply Filters</button>
+      <a class="button" href="{{ url_for('inventory', month=month) }}">Clear</a>
+    </div>
+  </form>
+</div>
 
-  <div class="card">
-    <h2 style="margin:0;">Total Inventory Value: ${{ '%.2f'|format(total_value) }}</h2>
-    {% if readonly_mode %}
-      <p class="alert">Snapshot mode: historical month is read-only.</p>
-    {% endif %}
-    {% if low_stock and not readonly_mode %}
-      <p class="alert">Low stock: {{ low_stock|length }} item(s)</p>
-    {% endif %}
+<div class="grid-3">
+  <div class="metric"><div class="metric-label">Total Inventory Value</div><div class="metric-value">${{ '%.2f'|format(total_value) }}</div></div>
+  <div class="metric"><div class="metric-label">Items</div><div class="metric-value">{{ items|length }}</div></div>
+  <div class="metric"><div class="metric-label">Low Stock Items</div><div class="metric-value">{{ low_stock|length if low_stock and not readonly_mode else 0 }}</div></div>
+</div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Name</th><th>Inventory Unit</th><th>Purchase Unit</th><th>Pack Size</th><th>Vendor</th><th>Cost/Unit</th><th>On Hand</th><th>Valuation</th><th>Reorder Level</th><th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for i in items %}
-        <tr>
-          <td>{{ i['name'] }}</td>
-          <td>{{ i['unit'] }}</td>
-          <td>{{ i['purchase_unit'] or '' }}</td>
-          <td>{{ i['pack_size'] or '' }}</td>
-          <td>{{ i['vendor'] }}</td>
-          <td>${{ '%.2f'|format(i['cost_per_unit']) }}</td>
-          <td>{{ i['on_hand'] }}</td>
-          <td>${{ '%.2f'|format(i['item_value']) }}</td>
-          <td>{{ i['reorder_level'] }}</td>
-          <td>
-            {% if readonly_mode %}
-              <span style="color:#6b7280;">Read-only</span>
-            {% else %}
-              <a href="{{ url_for('edit_item', item_id=i['id']) }}">Edit</a>
-              <form method="post" action="{{ url_for('delete_item', item_id=i['id']) }}" style="display:inline; margin-left:8px;" onsubmit="return confirm('Remove this item from inventory?');">
-                <button type="submit" style="padding:4px 8px;">Delete</button>
+<div class="card">
+  {% if readonly_mode %}
+    <div class="alert warning">Snapshot mode is active. This month is read-only.</div>
+  {% endif %}
+  {% if low_stock and not readonly_mode %}
+    <div class="alert danger">Low stock alert: {{ low_stock|length }} item(s) are at or below reorder level.</div>
+  {% endif %}
+
+  <table>
+    <thead>
+      <tr>
+        <th>Name</th><th>Inventory Unit</th><th>Purchase Unit</th><th>Pack Size</th><th>Vendor</th><th>Cost / Unit</th><th>On Hand</th><th>Valuation</th><th>Reorder Level</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for i in items %}
+      <tr>
+        <td>{{ i['name'] }}</td>
+        <td>{{ i['unit'] }}</td>
+        <td>{{ i['purchase_unit'] or '' }}</td>
+        <td>{{ i['pack_size'] or '' }}</td>
+        <td>{{ i['vendor'] }}</td>
+        <td>${{ '%.2f'|format(i['cost_per_unit']) }}</td>
+        <td>{{ i['on_hand'] }}</td>
+        <td>${{ '%.2f'|format(i['item_value']) }}</td>
+        <td>{{ i['reorder_level'] }}</td>
+        <td>
+          {% if readonly_mode %}
+            <span class="muted">Read-only</span>
+          {% else %}
+            <div class="action-row">
+              <a class="button" href="{{ url_for('edit_item', item_id=i['id']) }}">Edit</a>
+              <form method="post" action="{{ url_for('delete_item', item_id=i['id']) }}" onsubmit="return confirm('Remove this item from inventory?');">
+                <button type="submit" class="danger">Delete</button>
               </form>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-      <tfoot>
-        <tr style="font-weight:700; background:#f8fafc;">
-          <td colspan="7" style="text-align:right;">Total Inventory Value</td>
-          <td>${{ '%.2f'|format(total_value) }}</td>
-          <td colspan="2"></td>
-        </tr>
-      </tfoot>
-    </table>
-  </div>
-</body>
-</html>
+            </div>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr style="font-weight:700; background:#f8fafc;">
+        <td colspan="7" style="text-align:right;">Total Inventory Value</td>
+        <td>${{ '%.2f'|format(total_value) }}</td>
+        <td colspan="2"></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}

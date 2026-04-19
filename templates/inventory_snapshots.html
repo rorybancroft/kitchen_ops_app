@@ -1,93 +1,69 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Inventory Snapshots (Past Months)</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background: #f4f4f4; text-align: left; }
-    a.button, button { display: inline-block; padding: 8px 12px; margin-right: 8px; background: #f8fafc; color: #111827; text-decoration: none; border:1px solid #d1d5db; border-radius: 8px; cursor: pointer; }
-    a.button.primary, button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
-    select { padding:8px; border:1px solid #d1d5db; border-radius:8px; }
-    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    @media print {
-      body { margin: 0; background: #fff; color:#000; }
-      .no-print { display: none !important; }
-      .card { border: none; box-shadow: none; padding: 0; margin-bottom: 12px; }
-      table { font-size: 11px; }
-      th, td { padding: 6px; }
-      a { color: #000; text-decoration: none; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header-bar">
+{% extends "base.html" %}
+
+{% block title %}Inventory Snapshots{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
     <h1>Inventory Snapshots</h1>
+    <p>Review saved month-end inventory snapshots and print a clean historical stock valuation sheet.</p>
   </div>
-  
-  <p class="no-print">
+  <div class="nav-pills no-print">
     <a class="button" href="{{ url_for('inventory') }}">Back to Inventory</a>
     <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
-    <button class="button" onclick="window.print()">Print Snapshot</button>
-  </p>
+    <button type="button" onclick="window.print()">Print Snapshot</button>
+  </div>
+</div>
 
-  <div class="card no-print">
-    <h3>Select a Month</h3>
-    <form method="GET" action="{{ url_for('inventory_snapshots') }}" style="display: flex; gap: 8px; align-items: center;">
+<div class="card no-print">
+  <div class="section-head">
+    <div>
+      <h2>Select a Month</h2>
+      <p>Choose a saved snapshot month to review the historical inventory position.</p>
+    </div>
+  </div>
+  <form method="GET" action="{{ url_for('inventory_snapshots') }}">
+    <label>Saved snapshots
       <select name="month" onchange="this.form.submit()">
         {% for m in months %}
-          <option value="{{ m.snapshot_month }}" {% if m.snapshot_month == selected_month %}selected{% endif %}>
-            {{ m.snapshot_month }} (Saved on {{ m.snapshot_date.split(' ')[0] }})
-          </option>
+          <option value="{{ m.snapshot_month }}" {% if m.snapshot_month == selected_month %}selected{% endif %}>{{ m.snapshot_month }} (Saved on {{ m.snapshot_date.split(' ')[0] }})</option>
         {% endfor %}
       </select>
-    </form>
-  </div>
+    </label>
+  </form>
+</div>
 
-  {% if selected_month %}
-  <div class="card">
-    <h3>Snapshot: {{ selected_month }}</h3>
-    <h4>Total Inventory Value: ${{ "%.2f"|format(total_value) }}</h4>
-    <table>
-      <thead>
-        <tr>
-          <th>Item</th>
-          <th>Qty on Hand</th>
-          <th>Unit</th>
-          <th>Cost Per Unit</th>
-          <th>Total Value</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for s in snapshots %}
-        <tr>
-          <td>{{ s.item_name }}</td>
-          <td>{{ s.quantity }}</td>
-          <td>{{ s.unit }}</td>
-          <td>${{ "%.2f"|format(s.cost_per_unit) }}</td>
-          <td>${{ "%.2f"|format(s.total_value) }}</td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="5" style="text-align: center;">No data found for this snapshot.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-      <tfoot>
-        <tr>
-          <th colspan="4" style="text-align: right;">Total Value:</th>
-          <th>${{ "%.2f"|format(total_value) }}</th>
-        </tr>
-      </tfoot>
-    </table>
+{% if selected_month %}
+<div class="card">
+  <div class="section-head">
+    <div>
+      <h2>Snapshot: {{ selected_month }}</h2>
+      <p>Total Inventory Value: <strong>${{ "%.2f"|format(total_value) }}</strong></p>
+    </div>
   </div>
-  {% else %}
-  <div class="card">
-    <p>No snapshots have been saved yet. Go to the Inventory page and use the "Close Out Month" form to save a snapshot.</p>
-  </div>
-  {% endif %}
-</body>
-</html>
+  <table>
+    <thead><tr><th>Item</th><th>Qty on Hand</th><th>Unit</th><th>Cost Per Unit</th><th>Total Value</th></tr></thead>
+    <tbody>
+      {% for s in snapshots %}
+      <tr>
+        <td>{{ s.item_name }}</td>
+        <td>{{ s.quantity }}</td>
+        <td>{{ s.unit }}</td>
+        <td>${{ "%.2f"|format(s.cost_per_unit) }}</td>
+        <td>${{ "%.2f"|format(s.total_value) }}</td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" style="text-align:center;">No data found for this snapshot.</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th colspan="4" style="text-align:right;">Total Value</th><th>${{ "%.2f"|format(total_value) }}</th></tr>
+    </tfoot>
+  </table>
+</div>
+{% else %}
+<div class="card">
+  <p>No snapshots have been saved yet. Go to Inventory and use the month closeout form to save one.</p>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,38 +1,42 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Setup Wizard</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin:24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
-    .step { border-left:4px solid #d1d5db; padding:10px 12px; margin:10px 0; background:#fff; }
-    .step.done { border-left-color:#10b981; background:#f0fdf4; }
-    .badge { font-size:12px; padding:3px 8px; border-radius:999px; background:#e5e7eb; }
-    .badge.done { background:#10b981; color:#fff; }
-    a.button { display:inline-block; margin-top:8px; padding:8px 12px; border-radius:8px; border:1px solid #d1d5db; text-decoration:none; color:#111827; }
-  </style>
-</head>
-<body>
-  <h1>First-Run Setup Wizard</h1>
-  <p><a class="button" href="{{ url_for('dashboard') }}">Dashboard</a></p>
+{% extends "base.html" %}
 
-  <div class="card">
-    <p><strong>Inventory items:</strong> {{ item_count }} | <strong>Recipes:</strong> {{ recipe_count }}</p>
-    <p>This is the new-customer path: import inventory → build recipes → build menus → generate vendor POs.</p>
+{% block title %}Setup Wizard{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>First-Run Setup Wizard</h1>
+    <p>Guide a new operation from raw inventory to recipes, menus, and vendor-ready purchase orders.</p>
+  </div>
+  <div class="nav-pills no-print">
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+  </div>
+</div>
+
+<div class="grid-2">
+  <div class="metric"><div class="metric-label">Inventory Items</div><div class="metric-value">{{ item_count }}</div></div>
+  <div class="metric"><div class="metric-label">Recipes</div><div class="metric-value">{{ recipe_count }}</div></div>
+</div>
+
+<div class="card">
+  <div class="section-head">
+    <div>
+      <h2>Recommended setup path</h2>
+      <p>This is the cleanest customer journey: import inventory, build recipes, build menus, then generate vendor POs.</p>
+    </div>
   </div>
 
-  <div class="card">
-    {% for step in checklist %}
-      <div class="step {% if step.done %}done{% endif %}">
+  {% for step in checklist %}
+    <div class="card" style="margin-bottom:12px; border-left:6px solid {{ '#10b981' if step.done else '#cbd5e1' }};">
+      <div class="section-head">
         <div>
-          <strong>{{ loop.index }}. {{ step.title }}</strong>
-          <span class="badge {% if step.done %}done{% endif %}">{{ 'Done' if step.done else 'Pending' }}</span>
+          <h3 style="margin-bottom:6px;">{{ loop.index }}. {{ step.title }}</h3>
+          <p>{{ step.hint }}</p>
         </div>
-        <div style="margin-top:6px; color:#475569;">{{ step.hint }}</div>
-        <a class="button" href="{{ step.href }}">{{ step.cta }}</a>
+        <span class="badge {% if step.done %}done{% endif %}">{{ 'Done' if step.done else 'Pending' }}</span>
       </div>
-    {% endfor %}
-  </div>
-</body>
-</html>
+      <a class="button {% if not step.done %}primary{% endif %}" href="{{ step.href }}">{{ step.cta }}</a>
+    </div>
+  {% endfor %}
+</div>
+{% endblock %}

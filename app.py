@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, Response, send_from_directory, session, has_request_context
 import os
-import sqlite3
+import psycopg2
+import psycopg2.extras
 import csv
 import io
 import re
@@ -24,7 +25,7 @@ app = Flask(__name__)
 app.secret_key = os.environ.get("KITCHEN_OPS_SECRET_KEY") or "dev-only-secret"
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SECURE=True,
+    SESSION_COOKIE_SECURE=False,
     SESSION_COOKIE_SAMESITE="Lax",
 )
 
@@ -34,16 +35,13 @@ PERSIST_DIR = Path(os.environ.get("RENDER_DISK_PATH", str(BASE_DIR)))
 PERSIST_DIR.mkdir(parents=True, exist_ok=True)
 
 INVENTORIES = {
-    "uga": {"label": "UGA", "db_path": PERSIST_DIR / "kitchen_ops_uga.db"},
-    "mrra": {"label": "MRRA", "db_path": PERSIST_DIR / "kitchen_ops_mrra.db"},
+    "uga": {"label": "UGA", "schema": "uga"},
+    "mrra": {"label": "MRRA", "schema": "mrra"},
 }
 DEFAULT_INVENTORY = "uga"
-LEGACY_DB_PATH = PERSIST_DIR / "kitchen_ops.db"
 
 def ensure_inventory_dbs():
-    uga_path = INVENTORIES["uga"]["db_path"]
-    if LEGACY_DB_PATH.exists() and not uga_path.exists():
-        shutil.copy2(LEGACY_DB_PATH, uga_path)
+    pass
 
 def current_inventory_key() -> str:
     if has_request_context():
@@ -52,19 +50,56 @@ def current_inventory_key() -> str:
             return key
     return DEFAULT_INVENTORY
 
-def current_db_path() -> Path:
-    return INVENTORIES[current_inventory_key()]["db_path"]
+class PostgresConnWrapper:
+    def __init__(self, conn, schema):
+        self.conn = conn
+        self.schema = schema
+
+    def execute(self, query, vars=None):
+        cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        pg_query = query.replace('?', '%s')
+        pg_query = pg_query.replace("strftime('%Y-%m', purchase_date)", "to_char(purchase_date::date, 'YYYY-MM')")
+        pg_query = pg_query.replace("INSERT OR IGNORE INTO vendors (name)", "INSERT INTO vendors (name)")
+        pg_query = pg_query.replace("SELECT last_insert_rowid()", "SELECT lastval()")
+        
+        # Postgres ON CONFLICT requires a conflict target if it's not DO NOTHING. 
+        # But wait, we replaced INSERT OR IGNORE INTO with INSERT INTO. 
+        # The app uses: INSERT INTO vendors (name) ... ON CONFLICT DO NOTHING in standard postgres? 
+        # Actually, let's just let it fail or use ON CONFLICT (name) DO NOTHING.
+        # Wait, the app uses INSERT OR IGNORE INTO vendors (name) SELECT ...
+        pg_query = pg_query.replace("SELECT DISTINCT vendor FROM items WHERE vendor IS NOT NULL AND vendor != ''", "SELECT DISTINCT vendor FROM items WHERE vendor IS NOT NULL AND vendor != '' ON CONFLICT (name) DO NOTHING")
+
+        pg_query = pg_query.replace("INTEGER PRIMARY KEY AUTOINCREMENT", "SERIAL PRIMARY KEY")
+        cur.execute(pg_query, vars)
+        return cur
+
+    def commit(self):
+        self.conn.commit()
+
+    def rollback(self):
+        self.conn.rollback()
+
+    def close(self):
+        self.conn.close()
+
+def get_conn(schema=None):
+    if not schema:
+        schema = current_inventory_key()
+    db_url = os.environ.get("DATABASE_URL", "dbname=kitchen_ops")
+    conn = psycopg2.connect(db_url)
+    with conn.cursor() as cur:
+        cur.execute(f"CREATE SCHEMA IF NOT EXISTS {schema}")
+        cur.execute(f"SET search_path TO {schema}")
+    return PostgresConnWrapper(conn, schema)
 
 def has_any_user() -> bool:
-    conn = sqlite3.connect(INVENTORIES[DEFAULT_INVENTORY]["db_path"])
-    conn.row_factory = sqlite3.Row
     try:
+        conn = get_conn(DEFAULT_INVENTORY)
         row = conn.execute("SELECT COUNT(*) AS c FROM users").fetchone()
-        return bool(row and row["c"] > 0)
-    except sqlite3.OperationalError:
-        return False
-    finally:
         conn.close()
+        return bool(row and row["c"] > 0)
+    except Exception:
+        return False
 
 def login_required(view):
     from functools import wraps
@@ -87,12 +122,6 @@ def list_snapshot_files(inventory_key: str):
         label = key.replace("_", " ").title()
         files.append((key, label, p))
     return files
-
-
-def get_conn():
-    conn = sqlite3.connect(current_db_path())
-    conn.row_factory = sqlite3.Row
-    return conn
 
 
 def _parse_label_list(form, list_key, custom_key):
@@ -419,9 +448,23 @@ def parse_invoice_pdf(pdf_path: Path):
     return vendor, rows, text
 
 
-def init_db(db_path: Path | None = None):
-    conn = sqlite3.connect(db_path or current_db_path())
-    conn.row_factory = sqlite3.Row
+def init_db(schema: str = None):
+    conn = get_conn(schema)
+    conn.execute(
+        """
+        
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            display_name TEXT,
+            role TEXT NOT NULL DEFAULT 'admin',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+        """
+    )
     conn.execute(
         """
         CREATE TABLE IF NOT EXISTS items (
@@ -430,6 +473,11 @@ def init_db(db_path: Path | None = None):
             unit TEXT NOT NULL,
             purchase_unit TEXT,
             pack_size TEXT,
+            item_number TEXT,
+            sub_unit_1 TEXT,
+            sub_unit_1_factor REAL,
+            sub_unit_2 TEXT,
+            sub_unit_2_factor REAL,
             vendor TEXT,
             cost_per_unit REAL NOT NULL DEFAULT 0,
             on_hand REAL NOT NULL DEFAULT 0,
@@ -446,7 +494,8 @@ def init_db(db_path: Path | None = None):
             sale_price REAL NOT NULL DEFAULT 0,
             image_path TEXT,
             allergens TEXT,
-            dietary_labels TEXT
+            dietary_labels TEXT,
+            method TEXT
         )
         """
     )
@@ -524,6 +573,20 @@ def init_db(db_path: Path | None = None):
 
     conn.execute(
         """
+        
+        CREATE TABLE IF NOT EXISTS item_unit_conversions (
+            id SERIAL PRIMARY KEY,
+            item_id INTEGER NOT NULL,
+            from_unit TEXT NOT NULL,
+            to_unit TEXT NOT NULL,
+            factor REAL NOT NULL,
+            notes TEXT,
+            FOREIGN KEY(item_id) REFERENCES items(id)
+        )
+        """
+    )
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS inventory_snapshots (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             snapshot_date TEXT NOT NULL,
@@ -558,7 +621,7 @@ def init_db(db_path: Path | None = None):
         """
     )
     
-    recipe_cols = {row[1] for row in conn.execute("PRAGMA table_info(recipes)").fetchall()}
+    recipe_cols = {row[0] for row in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = %s AND table_name = 'recipes'", (conn.schema,)).fetchall()}
     if "sale_price" not in recipe_cols:
         conn.execute("ALTER TABLE recipes ADD COLUMN sale_price REAL NOT NULL DEFAULT 0")
     if "image_path" not in recipe_cols:
@@ -568,13 +631,13 @@ def init_db(db_path: Path | None = None):
     if "dietary_labels" not in recipe_cols:
         conn.execute("ALTER TABLE recipes ADD COLUMN dietary_labels TEXT")
 
-    item_cols = {row[1] for row in conn.execute("PRAGMA table_info(items)").fetchall()}
+    item_cols = {row[0] for row in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = %s AND table_name = 'items'", (conn.schema,)).fetchall()}
     if "purchase_unit" not in item_cols:
         conn.execute("ALTER TABLE items ADD COLUMN purchase_unit TEXT")
     if "pack_size" not in item_cols:
         conn.execute("ALTER TABLE items ADD COLUMN pack_size TEXT")
 
-    transfer_cols = {row[1] for row in conn.execute("PRAGMA table_info(inventory_transfers)").fetchall()}
+    transfer_cols = {row[0] for row in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = %s AND table_name = 'inventory_transfers'", (conn.schema,)).fetchall()}
     if "display_qty" not in transfer_cols:
         conn.execute("ALTER TABLE inventory_transfers ADD COLUMN display_qty REAL")
     if "display_unit" not in transfer_cols:
@@ -590,7 +653,7 @@ def init_db(db_path: Path | None = None):
         """
     )
 
-    cols = {row[1] for row in conn.execute("PRAGMA table_info(recipe_ingredients)").fetchall()}
+    cols = {row[0] for row in conn.execute("SELECT column_name FROM information_schema.columns WHERE table_schema = %s AND table_name = 'recipe_ingredients'", (conn.schema,)).fetchall()}
     if "display_quantity" not in cols:
         conn.execute("ALTER TABLE recipe_ingredients ADD COLUMN display_quantity REAL")
     if "display_unit" not in cols:
@@ -613,8 +676,7 @@ def init_db(db_path: Path | None = None):
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    conn = sqlite3.connect(INVENTORIES[DEFAULT_INVENTORY]["db_path"])
-    conn.row_factory = sqlite3.Row
+    conn = get_conn(DEFAULT_INVENTORY)
 
     if request.method == "POST":
         email = (request.form.get("email") or "").strip().lower()
@@ -663,6 +725,23 @@ def dashboard():
     conn = get_conn()
     items = conn.execute("SELECT * FROM items ORDER BY name").fetchall()
     recipe_count = conn.execute("SELECT COUNT(*) AS c FROM recipes").fetchone()["c"]
+
+    current_month_str = datetime.now().strftime("%Y-%m")
+    current_month_label = datetime.now().strftime("%B %Y")
+    
+    purchases_row = conn.execute(
+        "SELECT COUNT(*) AS c, SUM(invoice_total) AS t FROM purchases WHERE substr(purchase_date, 1, 7) = ?",
+        (current_month_str,)
+    ).fetchone()
+    purchase_count = purchases_row["c"] or 0
+    purchases_total = purchases_row["t"] or 0.0
+    
+    waste_row = conn.execute(
+        "SELECT SUM(total_value) AS t FROM waste_log WHERE substr(date, 1, 7) = ?",
+        (current_month_str,)
+    ).fetchone()
+    waste_total = waste_row["t"] or 0.0
+
     conn.close()
 
     low_stock = [i for i in items if i["on_hand"] <= i["reorder_level"]]
@@ -678,13 +757,17 @@ def dashboard():
         low_stock_count=len(low_stock),
         total_value=total_value,
         first_run=first_run,
+        current_month_label=current_month_label,
+        purchases_total=purchases_total,
+        waste_total=waste_total,
+        purchase_count=purchase_count,
     )
 
 
 @app.route("/setup")
 def setup_wizard():
     if has_any_user() and not session.get("user_id"):
-        return redirect(url_for("setup_wizard"))
+        return redirect(url_for("login"))
     conn = get_conn()
     item_count = conn.execute("SELECT COUNT(*) AS c FROM items").fetchone()["c"]
     recipe_count = conn.execute("SELECT COUNT(*) AS c FROM recipes").fetchone()["c"]
@@ -1148,7 +1231,7 @@ def vendors():
                     (name, rep_name, email, phone, notes)
                 )
                 conn.commit()
-            except sqlite3.IntegrityError:
+            except psycopg2.IntegrityError:
                 pass
         elif action == "edit":
             vid = int(request.form["vendor_id"])
@@ -1319,10 +1402,8 @@ def inventory_transfers():
                 # Fetch item details to match or create in target DB
                 item = conn.execute("SELECT name, unit, vendor, cost_per_unit FROM items WHERE id = ?", (item_id,)).fetchone()
                 if item:
-                    target_db_path = INVENTORIES[target_key]["db_path"]
-                    import sqlite3
-                    t_conn = sqlite3.connect(target_db_path)
-                    t_conn.row_factory = sqlite3.Row
+                    target_schema = INVENTORIES[target_key]["schema"]
+                    t_conn = get_conn(target_schema)
                     
                     # Find by name
                     t_item = t_conn.execute("SELECT id FROM items WHERE lower(name) = ?", (item["name"].lower(),)).fetchone()
@@ -1331,10 +1412,10 @@ def inventory_transfers():
                         t_item_id = t_item["id"]
                     else:
                         cur = t_conn.execute(
-                            "INSERT INTO items (name, unit, vendor, cost_per_unit, on_hand, reorder_level) VALUES (?, ?, ?, ?, ?, 0)",
+                            "INSERT INTO items (name, unit, vendor, cost_per_unit, on_hand, reorder_level) VALUES (?, ?, ?, ?, ?, 0) RETURNING id",
                             (item["name"], item["unit"], item["vendor"], item["cost_per_unit"], qty)
                         )
-                        t_item_id = cur.lastrowid
+                        t_item_id = cur.fetchone()["id"]
                         
                     # Also log the transfer in the target DB so they have a record of it arriving!
                     t_conn.execute(
@@ -2078,7 +2159,6 @@ def purchases():
 
 
 if __name__ == "__main__":
-    ensure_inventory_dbs()
-    for inv in INVENTORIES.values():
-        init_db(inv["db_path"])
+    for key, inv in INVENTORIES.items():
+        init_db(inv["schema"])
     app.run(host="0.0.0.0", port=5000, debug=True)

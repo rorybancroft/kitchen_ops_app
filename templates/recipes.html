@@ -1,75 +1,110 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Recipe Costing</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background: #f4f4f4; text-align: left; }
-    input { padding: 8px; margin-right: 8px; border:1px solid #d1d5db; border-radius:8px; }
-    button, a.button { padding: 8px 12px; border:1px solid #d1d5db; border-radius:8px; background:#f8fafc; text-decoration:none; color:#111827; }
-    a.button.primary, button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
-  </style>
-</head>
-<body>
-  <h1>Recipe Costing</h1>
-  <p>
+{% extends "base.html" %}
+
+{% block title %}Recipe Costing{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>Recipe Costing</h1>
+    <p>Build recipes, track cost, and create polished print cards for the kitchen.</p>
+  </div>
+  <div class="nav-pills no-print">
     <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
     <a class="button" href="{{ url_for('inventory') }}">Inventory</a>
-  </p>
-
-  <div class="card">
-    <h2 style="margin-top:0;">Create Recipe</h2>
-    <form method="post" enctype="multipart/form-data">
-      <input name="name" placeholder="Recipe name" required>
-      <input name="servings" type="number" step="0.01" value="1" required>
-      <input name="sale_price" type="number" step="0.01" min="0" placeholder="Sale price per serving ($)">
-      <div style="margin:8px 0; font-size:14px; color:#334155;">
-        Allergens:
-        {% for a in common_allergens %}
-          <label style="display:inline-flex; align-items:center; gap:4px; margin-right:8px;">
-            <input type="checkbox" name="allergens_list" value="{{ a }}">{{ a }}
-          </label>
-        {% endfor %}
-        <input name="allergens_custom" placeholder="Other allergens (comma-separated)">
-      </div>
-      <div style="margin:8px 0; font-size:14px; color:#334155;">
-        Dietary labels:
-        {% for d in dietary_labels %}
-          <label style="display:inline-flex; align-items:center; gap:4px; margin-right:8px;">
-            <input type="checkbox" name="dietary_list" value="{{ d }}">{{ d }}
-          </label>
-        {% endfor %}
-        <input name="dietary_custom" placeholder="Other labels (comma-separated)">
-      </div>
-      <input name="image" type="file" accept="image/*">
-      <button class="primary" type="submit">Create</button>
-    </form>
   </div>
+</div>
 
-  <div class="card">
-    <h2 style="margin-top:0;">Recipes</h2>
-    <table>
-      <thead><tr><th>Name</th><th>Servings</th><th>Sale Price/Serving</th><th>Open</th><th>Delete</th></tr></thead>
-      <tbody>
-        {% for r in recipes %}
-        <tr>
-          <td>{{ r['name'] }}</td>
-          <td>{{ r['servings'] }}</td>
-          <td>${{ '%.2f'|format(r['sale_price'] or 0) }}</td>
-          <td><a href="{{ url_for('recipe_detail', recipe_id=r['id']) }}">View / Add Ingredients</a></td>
-          <td>
-            <form method="post" action="{{ url_for('delete_recipe', recipe_id=r['id']) }}" onsubmit="return confirm('Delete recipe " + {{ r['name']|tojson }} + "? This cannot be undone.');">
-              <button type="submit" style="background:#fee2e2; border-color:#fecaca; color:#991b1b;">Delete</button>
-            </form>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="card">
+  <div class="section-head">
+    <div>
+      <h2>Create Recipe</h2>
+      <p>Start with the basics, then add ingredients and print-ready method notes.</p>
+    </div>
   </div>
-</body>
-</html>
+  <form method="post" enctype="multipart/form-data">
+    <div class="grid-3">
+      <label>
+        Recipe name
+        <input name="name" placeholder="Recipe name" required>
+      </label>
+      <label>
+        Servings
+        <input name="servings" type="number" step="0.01" value="1" required>
+      </label>
+      <label>
+        Sale price per serving ($)
+        <input name="sale_price" type="number" step="0.01" min="0" placeholder="0.00">
+      </label>
+    </div>
+
+    <div style="margin-top:16px;">
+      <label>
+        Method / instructions
+        <textarea name="method" rows="5" placeholder="Method / instructions for the recipe card"></textarea>
+      </label>
+    </div>
+
+    <div class="grid-2" style="margin-top:16px;">
+      <div>
+        <label>Allergens</label>
+        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:8px;">
+          {% for a in common_allergens %}
+            <label class="badge" style="font-weight:600;">
+              <input type="checkbox" name="allergens_list" value="{{ a }}" style="width:auto;"> {{ a }}
+            </label>
+          {% endfor %}
+        </div>
+        <input name="allergens_custom" placeholder="Other allergens (comma-separated)" style="margin-top:10px;">
+      </div>
+      <div>
+        <label>Dietary labels</label>
+        <div style="margin-top:8px; display:flex; flex-wrap:wrap; gap:8px;">
+          {% for d in dietary_labels %}
+            <label class="badge" style="font-weight:600;">
+              <input type="checkbox" name="dietary_list" value="{{ d }}" style="width:auto;"> {{ d }}
+            </label>
+          {% endfor %}
+        </div>
+        <input name="dietary_custom" placeholder="Other labels (comma-separated)" style="margin-top:10px;">
+      </div>
+    </div>
+
+    <div class="action-row" style="margin-top:16px;">
+      <label style="min-width:240px;">
+        Recipe photo
+        <input name="image" type="file" accept="image/*">
+      </label>
+      <button class="primary" type="submit">Create Recipe</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="section-head">
+    <div>
+      <h2>Recipes</h2>
+      <p>Open a recipe to manage ingredients, pricing, and bilingual print cards.</p>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Name</th><th>Servings</th><th>Sale Price / Serving</th><th>Open</th><th>Delete</th></tr>
+    </thead>
+    <tbody>
+      {% for r in recipes %}
+      <tr>
+        <td>{{ r['name'] }}</td>
+        <td>{{ r['servings'] }}</td>
+        <td>${{ '%.2f'|format(r['sale_price'] or 0) }}</td>
+        <td><a class="button" href="{{ url_for('recipe_detail', recipe_id=r['id']) }}">View / Add Ingredients</a></td>
+        <td>
+          <form method="post" action="{{ url_for('delete_recipe', recipe_id=r['id']) }}" onsubmit="return confirm('Delete recipe ' + {{ r['name']|tojson }} + '? This cannot be undone.');">
+            <button type="submit" class="danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

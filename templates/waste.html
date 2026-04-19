@@ -1,146 +1,135 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Waste Tracking</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background: #f4f4f4; text-align: left; }
-    input, select { padding:8px; border:1px solid #d1d5db; border-radius:8px; margin-right:6px; }
-    a.button, button { padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; background:#f8fafc; text-decoration:none; color:#111827; }
-    button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
-    .print-only { display:none; }
+{% extends "base.html" %}
 
-    .blank-sheet { display:none; background:#fff; border:1px solid #999; padding:14px; margin-top:12px; }
-    .blank-head { display:flex; justify-content:space-between; gap:12px; margin-bottom:10px; font-size:14px; }
-    .blank-line { border-bottom:1px solid #111; display:inline-block; min-width:180px; height:16px; vertical-align:bottom; }
-    .blank-table th, .blank-table td { border:1px solid #999; padding:8px; height:28px; }
+{% block title %}Waste Tracking{% endblock %}
 
-    @media print {
-      .no-print { display:none !important; }
-      .print-only { display:inline; }
-      body { background:#fff; margin:0.35in; }
-      .card, table { border:1px solid #999; }
+{% block extra_head %}
+<style>
+  .print-only { display:none; }
+  .blank-sheet { display:none; background:#fff; border:1px solid #999; padding:14px; margin-top:12px; }
+  .blank-head { display:flex; justify-content:space-between; gap:12px; margin-bottom:10px; font-size:14px; }
+  .blank-line { border-bottom:1px solid #111; display:inline-block; min-width:180px; height:16px; vertical-align:bottom; }
+  .blank-table th, .blank-table td { border:1px solid #999; padding:8px; height:28px; }
+  @media print {
+    .print-only { display:inline; }
+    body.print-blank > * { display:none !important; }
+    body.print-blank #blankWasteSheet { display:block !important; width:100%; border:none; padding:0; margin:0; }
+    body.print-blank #blankWasteSheet, body.print-blank .blank-table { page-break-inside:avoid; }
+    .blank-table th, .blank-table td { padding: 6px; height: 26px; }
+  }
+</style>
+{% endblock %}
 
-      /* For printing blank waste sheet specifically */
-      body.print-blank > * { display:none !important; }
-      body.print-blank #blankWasteSheet { display:block !important; width:100%; border:none; padding:0; margin:0; }
-      body.print-blank #blankWasteSheet, body.print-blank .blank-table { page-break-inside:avoid; }
-      .blank-table th, .blank-table td { padding: 6px; height: 26px; }
-    }
-  </style>
-</head>
-<body>
-  <h1>Waste Tracking</h1>
-  <p class="no-print">
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>Waste Tracking</h1>
+    <p>Log discarded product, track monthly loss, and print both valuation reports and blank daily waste sheets.</p>
+  </div>
+  <div class="nav-pills no-print">
     <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
     <a class="button" href="{{ url_for('inventory') }}">Inventory</a>
-  </p>
+  </div>
+</div>
 
-  <div class="card no-print">
-    <h2 style="margin-top:0;">Log New Waste</h2>
-    <form method="post" action="{{ url_for('waste_add') }}">
-      <input type="date" name="date" required>
+<div class="card no-print">
+  <div class="section-head">
+    <div>
+      <h2>Log New Waste</h2>
+      <p>Capture the loss while it’s fresh so reporting stays accurate.</p>
+    </div>
+  </div>
+  <form method="post" action="{{ url_for('waste_add') }}" class="grid-3">
+    <label>Date<input type="date" name="date" required></label>
+    <label>Item
       <select name="item_id" required>
         <option value="">Select item</option>
         {% for i in items %}
           <option value="{{ i['id'] }}">{{ i['name'] }} ({{ i['unit'] }})</option>
         {% endfor %}
       </select>
-      <input type="number" step="0.01" name="qty" placeholder="Qty" required>
-      <input name="reason" placeholder="Reason (e.g., dropped, expired, burned)" required>
+    </label>
+    <label>Qty<input type="number" step="0.01" name="qty" placeholder="Qty" required></label>
+    <label style="grid-column: span 2;">Reason<input name="reason" placeholder="Reason (e.g., dropped, expired, burned)" required></label>
+    <div class="action-row" style="align-items:end;">
       <button class="primary" type="submit">Log Waste</button>
-    </form>
-  </div>
-
-  <div class="card no-print">
-    <form method="get">
-      <label>Month:</label>
-      <input type="month" name="month" value="{{ month }}">
-      <button type="submit">Load</button>
-      <button type="button" onclick="printValuationReport()">Print Valuation Report</button>
-      <button type="button" onclick="printBlankWasteSheet()">Print Blank Waste Sheet</button>
-    </form>
-  </div>
-
-  <div class="card">
-    <h2 style="margin-top:0;">Waste Valuation Report — {{ month }}</h2>
-    <table>
-
-      <thead>
-        <tr>
-          <th>Date</th><th>Item</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Total Value</th><th>Reason</th><th class="no-print">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-          <tr>
-            <td>{{ r['date'] }}</td>
-            <td>{{ r['item_name'] }}</td>
-            <td>{{ r['qty'] }}</td>
-            <td>{{ r['unit'] }}</td>
-            <td>${{ '%.2f'|format(r['cost_per_unit_at_time']) }}</td>
-            <td>${{ '%.2f'|format(r['total_value']) }}</td>
-            <td>{{ r['reason'] }}</td>
-            <td class="no-print">
-              <form method="post" action="{{ url_for('delete_waste', waste_id=r['id'], month=month) }}" onsubmit="return confirm('Delete this waste log? Note: This does NOT automatically restore inventory.');" style="margin:0;">
-                <button type="submit">Delete</button>
-              </form>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <p><strong>Total Waste Valuation: ${{ '%.2f'|format(total_value) }}</strong></p>
-  </div>
-
-  <div class="blank-sheet" id="blankWasteSheet">
-    <h2 style="margin:0 0 10px 0;">Daily Waste Log (Blank)</h2>
-    <div class="blank-head">
-      <div>Date: <span class="blank-line"></span></div>
-      <div>Shift: <span class="blank-line" style="min-width:120px;"></span></div>
-      <div>Manager: <span class="blank-line"></span></div>
     </div>
+  </form>
+</div>
 
-    <table class="blank-table" style="width:100%; border-collapse:collapse;">
-      <thead>
-        <tr>
-          <th style="width:12%;">Time</th>
-          <th style="width:38%;">Item</th>
-          <th style="width:12%;">Qty</th>
-          <th style="width:10%;">Unit</th>
-          <th style="width:20%;">Reason</th>
-          <th style="width:8%;">Init.</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for _ in range(25) %}
-          <tr>
-            <td></td><td></td><td></td><td></td><td></td><td></td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+<div class="card no-print">
+  <form method="get" class="action-row">
+    <label>Month<input type="month" name="month" value="{{ month }}"></label>
+    <button type="submit">Load</button>
+    <button type="button" onclick="printValuationReport()">Print Valuation Report</button>
+    <button type="button" onclick="printBlankWasteSheet()">Print Blank Waste Sheet</button>
+  </form>
+</div>
 
-    <p style="margin-top:10px; font-size:12px; color:#374151;">
-      Note: Enter waste at time of discard. Include reason clearly (expired, overcooked, dropped, contamination, etc.).
-    </p>
+<div class="card">
+  <div class="section-head">
+    <div>
+      <h2>Waste Valuation Report — {{ month }}</h2>
+      <p>Monthly waste log with extended value for each discarded item.</p>
+    </div>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Item</th><th>Qty</th><th>Unit</th><th>Unit Cost</th><th>Total Value</th><th>Reason</th><th class="no-print">Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <td>{{ r['date'] }}</td>
+        <td>{{ r['item_name'] }}</td>
+        <td>{{ r['qty'] }}</td>
+        <td>{{ r['unit'] }}</td>
+        <td>${{ '%.2f'|format(r['cost_per_unit_at_time']) }}</td>
+        <td>${{ '%.2f'|format(r['total_value']) }}</td>
+        <td>{{ r['reason'] }}</td>
+        <td class="no-print">
+          <form method="post" action="{{ url_for('delete_waste', waste_id=r['id'], month=month) }}" onsubmit="return confirm('Delete this waste log? Note: This does NOT automatically restore inventory.');" style="margin:0;">
+            <button type="submit" class="danger">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p><strong>Total Waste Valuation: ${{ '%.2f'|format(total_value) }}</strong></p>
+</div>
+
+<div class="blank-sheet" id="blankWasteSheet">
+  <h2 style="margin:0 0 10px 0;">Daily Waste Log (Blank)</h2>
+  <div class="blank-head">
+    <div>Date: <span class="blank-line"></span></div>
+    <div>Shift: <span class="blank-line" style="min-width:120px;"></span></div>
+    <div>Manager: <span class="blank-line"></span></div>
   </div>
 
-  <script>
-    function printValuationReport() {
-      document.body.classList.remove('print-blank');
-      window.print();
-    }
+  <table class="blank-table" style="width:100%; border-collapse:collapse;">
+    <thead>
+      <tr><th style="width:12%;">Time</th><th style="width:38%;">Item</th><th style="width:12%;">Qty</th><th style="width:10%;">Unit</th><th style="width:20%;">Reason</th><th style="width:8%;">Init.</th></tr>
+    </thead>
+    <tbody>
+      {% for _ in range(25) %}
+      <tr><td></td><td></td><td></td><td></td><td></td><td></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-    function printBlankWasteSheet() {
-      document.body.classList.add('print-blank');
-      window.print();
-      setTimeout(() => document.body.classList.remove('print-blank'), 100);
-    }
-  </script>
-</body>
-</html>
+  <p style="margin-top:10px; font-size:12px; color:#374151;">Note: Enter waste at time of discard. Include reason clearly (expired, overcooked, dropped, contamination, etc.).</p>
+</div>
+
+<script>
+  function printValuationReport() {
+    document.body.classList.remove('print-blank');
+    window.print();
+  }
+
+  function printBlankWasteSheet() {
+    document.body.classList.add('print-blank');
+    window.print();
+    setTimeout(() => document.body.classList.remove('print-blank'), 100);
+  }
+</script>
+{% endblock %}

@@ -1,110 +1,112 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Inventory Transfers</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background: #f4f4f4; text-align: left; }
-    input, select { padding:8px; border:1px solid #d1d5db; border-radius:8px; margin-right:6px; }
-    a.button, button { padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; background:#f8fafc; text-decoration:none; color:#111827; }
-    button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
-    .print-only { display:none; }
-    @media print {
-      .no-print { display:none !important; }
-      .print-only { display:inline; }
-      body { background:#fff; margin:0.35in; }
-      .card, table { border:1px solid #999; }
-    }
-  </style>
-</head>
-<body>
-  <h1>Inventory Transfers</h1>
-  <p class="no-print">
+{% extends "base.html" %}
+
+{% block title %}Inventory Transfers{% endblock %}
+
+{% block extra_head %}
+<style>
+  .print-only { display:none; }
+  @media print { .print-only { display:inline; } }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>Inventory Transfers</h1>
+    <p>Track product moved out of inventory, keep the value visible, and print clean monthly transfer logs.</p>
+  </div>
+  <div class="nav-pills no-print">
     <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
     <a class="button" href="{{ url_for('inventory') }}">Inventory</a>
-  </p>
+  </div>
+</div>
 
-  <div class="card no-print">
-    <h2 style="margin-top:0;">Add Transfer</h2>
-    <form method="post">
-      <input type="hidden" name="action" value="add">
-      <input type="date" name="transfer_date" required>
+<div class="card no-print">
+  <div class="section-head">
+    <div>
+      <h2>Add Transfer</h2>
+      <p>Log a transfer with display units and conversion so reporting stays accurate.</p>
+    </div>
+  </div>
+  <form method="post" class="grid-3">
+    <input type="hidden" name="action" value="add">
+    <label>Date<input type="date" name="transfer_date" required></label>
+    <label>Item
       <select name="item_id" id="transfer-item" required>
         <option value="">Select item</option>
         {% for i in items %}
           <option value="{{ i['id'] }}" data-unit="{{ i['unit'] }}">{{ i['name'] }} ({{ i['unit'] }})</option>
         {% endfor %}
       </select>
-      <input type="number" step="0.01" name="qty" placeholder="Qty" required>
-      <input name="display_unit" id="transfer-unit" placeholder="Unit (case/lb/etc)">
-      <input type="number" step="0.0001" min="0.0001" name="conversion_factor" value="1" title="How many item base units in 1 transfer unit">
-      <input name="transfer_from" placeholder="Transfer from" required>
-      <input name="transfer_to" placeholder="Transfer to" required>
-      <input name="note" placeholder="Note (optional)">
+    </label>
+    <label>Qty<input type="number" step="0.01" name="qty" placeholder="Qty" required></label>
+    <label>Display unit<input name="display_unit" id="transfer-unit" placeholder="Unit (case/lb/etc)"></label>
+    <label>Conversion factor<input type="number" step="0.0001" min="0.0001" name="conversion_factor" value="1" title="How many item base units in 1 transfer unit"></label>
+    <label>Transfer from<input name="transfer_from" placeholder="Transfer from" required></label>
+    <label>Transfer to<input name="transfer_to" placeholder="Transfer to" required></label>
+    <label style="grid-column: span 2;">Note<input name="note" placeholder="Note (optional)"></label>
+    <div class="action-row" style="align-items:end;">
       <button class="primary" type="submit">Add</button>
-    </form>
-  </div>
+    </div>
+  </form>
+</div>
 
-  <div class="card no-print">
-    <form method="get">
-      <label>Month:</label>
-      <input type="month" name="month" value="{{ month }}">
-      <button type="submit">Load</button>
-      <button type="button" onclick="window.print()">Print Month List</button>
-    </form>
-  </div>
+<div class="card no-print">
+  <form method="get" class="action-row">
+    <label>Month<input type="month" name="month" value="{{ month }}"></label>
+    <button type="submit">Load</button>
+    <button type="button" onclick="window.print()">Print Month List</button>
+  </form>
+</div>
 
-  <div class="card">
-    <h2 style="margin-top:0;">Transfer Log — {{ month }}</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th><th>Item</th><th>Qty</th><th>Unit</th><th>Conv</th><th>Unit Cost</th><th>Extended Value</th><th>Transfer From</th><th>Transfer To</th><th>Note</th><th class="no-print">Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for r in rows %}
-          <tr>
-            <form method="post">
-              <input type="hidden" name="action" value="update">
-              <input type="hidden" name="transfer_id" value="{{ r['id'] }}">
-              <td><input type="date" name="transfer_date" value="{{ r['transfer_date'] }}" class="no-print" style="width:145px;"><span class="print-only">{{ r['transfer_date'] }}</span></td>
-              <td>{{ r['item_name'] }}</td>
-              <td><input type="number" step="0.01" name="qty" value="{{ r['display_qty'] if r['display_qty'] is not none else r['qty'] }}" class="no-print" style="width:80px;"><span class="print-only">{{ r['display_qty'] if r['display_qty'] is not none else r['qty'] }}</span></td>
-              <td><input name="display_unit" value="{{ r['display_unit'] or r['unit'] }}" class="no-print" style="width:70px;"><span class="print-only">{{ r['display_unit'] or r['unit'] }}</span></td>
-              <td><input type="number" step="0.0001" min="0.0001" name="conversion_factor" value="{{ r['conversion_factor'] if r['conversion_factor'] is not none else 1 }}" class="no-print" style="width:85px;"><span class="print-only">{{ r['conversion_factor'] if r['conversion_factor'] is not none else 1 }}</span></td>
-              <td>${{ '%.2f'|format(r['cost_per_unit']) }}</td>
-              <td>${{ '%.2f'|format(r['extended_value']) }}</td>
-              <td><input name="transfer_from" value="{{ r['transfer_from'] }}" class="no-print" style="width:120px;"><span class="print-only">{{ r['transfer_from'] }}</span></td>
-              <td><input name="transfer_to" value="{{ r['transfer_to'] }}" class="no-print" style="width:120px;"><span class="print-only">{{ r['transfer_to'] }}</span></td>
-              <td><input name="note" value="{{ r['note'] or '' }}" class="no-print" style="width:120px;"><span class="print-only">{{ r['note'] or '' }}</span></td>
-              <td class="no-print">
-                <button type="submit">Save</button>
-            </form>
-              <form method="post" action="{{ url_for('delete_inventory_transfer', transfer_id=r['id'], month=month) }}" onsubmit="return confirm('Delete this transfer row?');" style="margin-top:4px;">
-                <button type="submit">Delete</button>
+<div class="card">
+  <div class="section-head">
+    <div>
+      <h2>Transfer Log — {{ month }}</h2>
+      <p>Total Extended Value: <strong>${{ '%.2f'|format(total_extended) }}</strong></p>
+    </div>
+  </div>
+  <table>
+    <thead><tr><th>Date</th><th>Item</th><th>Qty</th><th>Unit</th><th>Conv</th><th>Unit Cost</th><th>Extended Value</th><th>Transfer From</th><th>Transfer To</th><th>Note</th><th class="no-print">Actions</th></tr></thead>
+    <tbody>
+      {% for r in rows %}
+      <tr>
+        <form method="post">
+          <input type="hidden" name="action" value="update">
+          <input type="hidden" name="transfer_id" value="{{ r['id'] }}">
+          <td><input type="date" name="transfer_date" value="{{ r['transfer_date'] }}" class="no-print"><span class="print-only">{{ r['transfer_date'] }}</span></td>
+          <td>{{ r['item_name'] }}</td>
+          <td><input type="number" step="0.01" name="qty" value="{{ r['display_qty'] if r['display_qty'] is not none else r['qty'] }}" class="no-print"><span class="print-only">{{ r['display_qty'] if r['display_qty'] is not none else r['qty'] }}</span></td>
+          <td><input name="display_unit" value="{{ r['display_unit'] or r['unit'] }}" class="no-print"><span class="print-only">{{ r['display_unit'] or r['unit'] }}</span></td>
+          <td><input type="number" step="0.0001" min="0.0001" name="conversion_factor" value="{{ r['conversion_factor'] if r['conversion_factor'] is not none else 1 }}" class="no-print"><span class="print-only">{{ r['conversion_factor'] if r['conversion_factor'] is not none else 1 }}</span></td>
+          <td>${{ '%.2f'|format(r['cost_per_unit']) }}</td>
+          <td>${{ '%.2f'|format(r['extended_value']) }}</td>
+          <td><input name="transfer_from" value="{{ r['transfer_from'] }}" class="no-print"><span class="print-only">{{ r['transfer_from'] }}</span></td>
+          <td><input name="transfer_to" value="{{ r['transfer_to'] }}" class="no-print"><span class="print-only">{{ r['transfer_to'] }}</span></td>
+          <td><input name="note" value="{{ r['note'] or '' }}" class="no-print"><span class="print-only">{{ r['note'] or '' }}</span></td>
+          <td class="no-print">
+            <div class="action-row">
+              <button type="submit">Save</button>
+        </form>
+              <form method="post" action="{{ url_for('delete_inventory_transfer', transfer_id=r['id'], month=month) }}" onsubmit="return confirm('Delete this transfer row?');">
+                <button type="submit" class="danger">Delete</button>
               </form>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-    <p><strong>Total Extended Value: ${{ '%.2f'|format(total_extended) }}</strong></p>
-  </div>
+            </div>
+          </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
 
-  <script>
-    const itemSel = document.getElementById('transfer-item');
-    const unitInp = document.getElementById('transfer-unit');
-    if (itemSel && unitInp) {
-      itemSel.addEventListener('change', () => {
-        const opt = itemSel.options[itemSel.selectedIndex];
-        if (opt && !unitInp.value) unitInp.value = opt.dataset.unit || '';
-      });
-    }
-  </script>
-</body>
-</html>
+<script>
+  const itemSel = document.getElementById('transfer-item');
+  const unitInp = document.getElementById('transfer-unit');
+  if (itemSel && unitInp) {
+    itemSel.addEventListener('change', () => {
+      const opt = itemSel.options[itemSel.selectedIndex];
+      if (opt && !unitInp.value) unitInp.value = opt.dataset.unit || '';
+    });
+  }
+</script>
+{% endblock %}

@@ -1,74 +1,38 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Month End Summary</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:24px; margin-bottom:16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    a.button, button { display: inline-block; padding: 10px 16px; margin-right: 8px; background: #f8fafc; color: #111827; text-decoration: none; border:1px solid #d1d5db; border-radius: 8px; cursor: pointer; font-weight: bold; }
-    a.button.primary, button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
-    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-top: 16px; }
-    .metric { text-align: center; padding: 24px; background: #f1f5f9; border-radius: 12px; }
-    .metric h3 { margin: 0 0 12px 0; color: #475569; font-size: 1.1rem; }
-    .metric p { margin: 0; font-size: 2.5rem; font-weight: bold; color: #0f172a; }
-    .metric.green p { color: #059669; }
-    .metric.red p { color: #dc2626; }
-    @media print {
-      body { margin: 0; background: #fff; color:#000; }
-      .no-print { display: none !important; }
-      .card { border: none; box-shadow: none; padding: 0; margin-bottom: 12px; }
-      .summary-grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-      .metric { padding: 12px; background: #fff; border: 1px solid #ddd; }
-      .metric p { font-size: 2rem; }
-      h1 { font-size: 24px; margin-top: 0; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header-bar">
-    <h1 style="margin: 0;">Month End Summary — {{ month_name }}</h1>
-  </div>
-  
-  <p class="no-print" style="margin-bottom: 24px;">
-    <a class="button" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
-    <button class="button" onclick="window.print()">Print Report</button>
-  </p>
+{% extends "base.html" %}
 
-  <div class="card no-print">
-    <form method="GET" action="{{ url_for('month_end_summary') }}" style="display: flex; gap: 12px; align-items: center;">
-      <label><b>Select Month:</b></label>
-      <input type="month" name="month" value="{{ month_val }}" style="padding: 8px; border: 1px solid #d1d5db; border-radius: 8px;">
-      <button type="submit" class="button primary" style="margin: 0;">Generate Report</button>
-    </form>
-  </div>
+{% block title %}Month End Summary{% endblock %}
 
-  <div class="card">
-    <h2 style="margin-top: 0; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px;">Financial Overview</h2>
-    <p>This report aggregates your total spend, logged waste, inventory transfers, and your saved end-of-month inventory snapshot value.</p>
-    
-    <div class="summary-grid">
-      <div class="metric green">
-        <h3>Total Purchases</h3>
-        <p>${{ "%.2f"|format(purchases_total) }}</p>
-      </div>
-      
-      <div class="metric">
-        <h3>Ending Inventory Snapshot</h3>
-        <p>${{ "%.2f"|format(inventory_total) }}</p>
-      </div>
-      
-      <div class="metric red">
-        <h3>Total Waste Valuation</h3>
-        <p>${{ "%.2f"|format(waste_total) }}</p>
-      </div>
-      
-      <div class="metric">
-        <h3>Total Transfers Out</h3>
-        <p>${{ "%.2f"|format(transfers_total) }}</p>
-      </div>
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>Month End Summary — {{ month_name }}</h1>
+    <p>Review the financial picture for the month with purchases, waste, transfers, and ending inventory in one place.</p>
+  </div>
+  <div class="nav-pills no-print">
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <button type="button" onclick="window.print()">Print Report</button>
+  </div>
+</div>
+
+<div class="card no-print">
+  <form method="GET" action="{{ url_for('month_end_summary') }}" class="action-row">
+    <label>Select Month<input type="month" name="month" value="{{ month_val }}"></label>
+    <button type="submit" class="primary">Generate Report</button>
+  </form>
+</div>
+
+<div class="card">
+  <div class="section-head">
+    <div>
+      <h2>Financial Overview</h2>
+      <p>This report aggregates total spend, logged waste, inventory transfers, and the saved end-of-month inventory snapshot value.</p>
     </div>
   </div>
-</body>
-</html>
+  <div class="grid-2">
+    <div class="metric"><div class="metric-label">Total Purchases</div><div class="metric-value" style="color:#059669;">${{ "%.2f"|format(purchases_total) }}</div></div>
+    <div class="metric"><div class="metric-label">Ending Inventory Snapshot</div><div class="metric-value">${{ "%.2f"|format(inventory_total) }}</div></div>
+    <div class="metric"><div class="metric-label">Total Waste Valuation</div><div class="metric-value" style="color:#dc2626;">${{ "%.2f"|format(waste_total) }}</div></div>
+    <div class="metric"><div class="metric-label">Total Transfers Out</div><div class="metric-value">${{ "%.2f"|format(transfers_total) }}</div></div>
+  </div>
+</div>
+{% endblock %}

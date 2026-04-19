@@ -1,40 +1,37 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Upload Inventory Counts</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; max-width:760px; }
-    a.button, button { display:inline-block; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; text-decoration:none; color:#111827; background:#f8fafc; }
-    button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
-    .ok { color:#065f46; }
-  </style>
-</head>
-<body>
-  <h1>Upload Counted Inventory CSV</h1>
-  <p>
+{% extends "base.html" %}
+
+{% block title %}Upload Inventory Counts{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>Upload Counted Inventory CSV</h1>
+    <p>Bring back your count sheet, apply counted quantities, and download variance or exception reports if needed.</p>
+  </div>
+  <div class="nav-pills no-print">
     <a class="button" href="{{ url_for('inventory') }}">Back to Inventory</a>
-    <a class="button" href="{{ url_for('inventory_count_sheet_csv') }}">Download Blank Count Sheet</a>
-  </p>
+    <a class="button" href="{{ url_for('inventory_count_sheet_csv') }}">Blank Count Sheet</a>
+  </div>
+</div>
 
-  <div class="card">
-    <p>Fill in the <strong>counted_qty</strong> column in the downloaded sheet, then upload it here.</p>
-    <form method="post" enctype="multipart/form-data">
-      <input type="file" name="file" accept=".csv,text/csv" required>
-      <button class="primary" type="submit">Upload Counts</button>
-    </form>
+<div class="card" style="max-width:900px;">
+  <p>Fill in the <strong>counted_qty</strong> column in the downloaded sheet, then upload it here.</p>
+  <form method="post" enctype="multipart/form-data" class="action-row">
+    <input type="file" name="file" accept=".csv,text/csv" required style="max-width:340px;">
+    <button class="primary" type="submit">Upload Counts</button>
+  </form>
 
-    {% if message %}
-      <p class="ok"><strong>{{ message }}</strong> Updated items: {{ applied }}</p>
-      <p>Variance rows: {{ variance_count }} | Exceptions: {{ exception_count }}</p>
+  {% if message %}
+    <div class="alert success" style="margin-top:16px;"><strong>{{ message }}</strong> Updated items: {{ applied }}</div>
+    <p>Variance rows: {{ variance_count }} | Exceptions: {{ exception_count }}</p>
+    <div class="action-row">
       {% if variance_file %}
-        <p><a class="button" href="{{ url_for('uploads', filename=variance_file) }}">Download Variance Report CSV</a></p>
+        <a class="button" href="{{ url_for('uploads', filename=variance_file) }}">Variance Report CSV</a>
       {% endif %}
       {% if exception_file %}
-        <p><a class="button" href="{{ url_for('uploads', filename=exception_file) }}">Download Exception Report CSV</a></p>
+        <a class="button" href="{{ url_for('uploads', filename=exception_file) }}">Exception Report CSV</a>
       {% endif %}
-    {% endif %}
-  </div>
-</body>
-</html>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

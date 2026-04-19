@@ -1,115 +1,102 @@
-<!doctype html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <title>Purchases Log</title>
-  <style>
-    body { font-family: Arial, sans-serif; margin: 24px; background:#f8fafc; color:#0f172a; }
-    .card { background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:16px; margin-bottom:14px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 12px; background:#fff; }
-    th, td { border: 1px solid #ddd; padding: 8px; }
-    th { background: #f4f4f4; text-align: left; }
-    a.button, button { display: inline-block; padding: 8px 12px; margin-right: 8px; background: #f8fafc; color: #111827; text-decoration: none; border:1px solid #d1d5db; border-radius: 8px; cursor: pointer; }
-    a.button.primary, button.primary { background:#0b5fff; color:#fff; border-color:#0b5fff; }
-    input, select { padding:8px; border:1px solid #d1d5db; border-radius:8px; }
-    .header-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
-    
-    @media print {
-      body { margin: 0; background: #fff; color:#000; }
-      .no-print { display: none !important; }
-      .card { border: none; box-shadow: none; padding: 0; margin-bottom: 12px; }
-      table { font-size: 11px; }
-      th, td { padding: 6px; }
-      a { color: #000; text-decoration: none; }
-    }
-  </style>
-</head>
-<body>
-  <div class="header-bar">
-    <h1>Purchases Log</h1>
-  </div>
-  
-  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px;">
-    <div style="text-align: center; padding: 16px; background: #fff; border:1px solid #e5e7eb; border-radius: 12px;">
-      <h3 style="margin:0 0 8px 0; color: #475569;">Monthly Budget</h3>
-      <p style="margin:0; font-size: 2rem; font-weight: bold; color: #0f172a;">${{ "%.2f"|format(current_budget) }}</p>
-      <form method="POST" class="no-print" style="margin-top: 12px; display: flex; justify-content: center; gap: 8px;">
-        <input type="hidden" name="set_budget" value="1">
-        <input type="number" step="0.01" name="budget_amount" placeholder="Set Budget" style="width: 100px; padding: 4px;" required>
-        <button class="button" type="submit" style="padding: 4px 8px;">Save</button>
-      </form>
-    </div>
-    
-    <div style="text-align: center; padding: 16px; background: #fff; border:1px solid #e5e7eb; border-radius: 12px;">
-      <h3 style="margin:0 0 8px 0; color: #475569;">Total Spend</h3>
-      <p style="margin:0; font-size: 2rem; font-weight: bold; color: #0f172a;">${{ "%.2f"|format(total_spend) }}</p>
-    </div>
-    
-    <div style="text-align: center; padding: 16px; background: #fff; border:1px solid #e5e7eb; border-radius: 12px;">
-      <h3 style="margin:0 0 8px 0; color: #475569;">Remaining Budget</h3>
-      <p style="margin:0; font-size: 2rem; font-weight: bold; color: {{ '#dc2626' if remaining_budget < 0 else '#059669' }};">
-        ${{ "%.2f"|format(remaining_budget) }}
-      </p>
-    </div>
-  </div>
-  
-  <p class="no-print">
-    <a class="button" href="{{ url_for('dashboard') }}">Back to Dashboard</a>
-    <button class="button" onclick="window.print()">Print Sheet</button>
-  </p>
+{% extends "base.html" %}
 
-  <div class="card no-print">
-    <h3>Log an Invoice</h3>
-    <form method="POST" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: center;">
-      <input type="date" name="purchase_date" required>
-      <input type="text" name="company" placeholder="Supplier / Company" required>
-      <input type="text" name="invoice_number" placeholder="Invoice #">
-      <input type="number" step="0.01" name="invoice_total" placeholder="Invoice Total ($)" required style="width: 140px;">
-      <input type="text" name="po_number" placeholder="PO Number">
-      <button class="button primary" type="submit">Log Invoice</button>
+{% block title %}Purchases Log{% endblock %}
+
+{% block content %}
+<div class="topbar">
+  <div class="title-wrap">
+    <h1>Purchases Log</h1>
+    <p>Track invoice spend, manage monthly budget targets, and keep a cleaner month-by-month buying record.</p>
+  </div>
+  <div class="nav-pills no-print">
+    <a class="button" href="{{ url_for('dashboard') }}">Dashboard</a>
+    <button type="button" onclick="window.print()">Print Sheet</button>
+  </div>
+</div>
+
+<div class="grid-3">
+  <div class="metric">
+    <div class="metric-label">Monthly Budget</div>
+    <div class="metric-value">${{ "%.2f"|format(current_budget) }}</div>
+    <form method="POST" class="no-print" style="margin-top: 12px;" >
+      <input type="hidden" name="set_budget" value="1">
+      <div class="action-row">
+        <input type="number" step="0.01" name="budget_amount" placeholder="Set budget" style="max-width:160px;" required>
+        <button type="submit">Save</button>
+      </div>
     </form>
   </div>
-
-  <div class="card">
-    <div style="display: flex; justify-content: space-between; align-items: center;">
-      <h3>Invoice History</h3>
-      <form method="GET" action="{{ url_for('purchases') }}" class="no-print" style="margin: 0; display: flex; align-items: center; gap: 8px;">
-        <label><b>View Month:</b></label>
-        <input type="month" name="month" value="{{ month }}" onchange="this.form.submit()">
-      </form>
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th>Date</th>
-          <th>Company</th>
-          <th>Invoice Number</th>
-          <th>PO Number</th>
-          <th>Invoice Total</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in purchases %}
-        <tr>
-          <td>{{ p.purchase_date }}</td>
-          <td>{{ p.company }}</td>
-          <td>{{ p.invoice_number }}</td>
-          <td>{{ p.po_number }}</td>
-          <td>${{ "%.2f"|format(p.invoice_total) }}</td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="5" style="text-align: center;">No invoices logged yet.</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-      <tfoot>
-        <tr>
-          <th colspan="4" style="text-align: right;">Total:</th>
-          <th>${{ "%.2f"|format(total_spend) }}</th>
-        </tr>
-      </tfoot>
-    </table>
+  <div class="metric">
+    <div class="metric-label">Total Spend</div>
+    <div class="metric-value">${{ "%.2f"|format(total_spend) }}</div>
   </div>
-</body>
-</html>
+  <div class="metric">
+    <div class="metric-label">Remaining Budget</div>
+    <div class="metric-value" style="color: {{ '#dc2626' if remaining_budget < 0 else '#059669' }};">${{ "%.2f"|format(remaining_budget) }}</div>
+  </div>
+</div>
+
+<div class="card no-print">
+  <div class="section-head">
+    <div>
+      <h2>Log an Invoice</h2>
+      <p>Add invoice details so the month stays current and budget totals stay honest.</p>
+    </div>
+  </div>
+  <form method="POST" class="grid-3">
+    <label>Date<input type="date" name="purchase_date" required></label>
+    <label>Supplier / Company<input type="text" name="company" placeholder="Supplier / Company" required></label>
+    <label>Invoice #<input type="text" name="invoice_number" placeholder="Invoice #"></label>
+    <label>Invoice Total ($)<input type="number" step="0.01" name="invoice_total" placeholder="0.00" required></label>
+    <label>PO Number<input type="text" name="po_number" placeholder="PO Number"></label>
+    <div class="action-row" style="align-items:end;">
+      <button class="primary" type="submit">Log Invoice</button>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  <div class="section-head">
+    <div>
+      <h2>Invoice History</h2>
+      <p>Review the current month, print the sheet, or switch months quickly.</p>
+    </div>
+    <form method="GET" action="{{ url_for('purchases') }}" class="no-print">
+      <label>View Month<input type="month" name="month" value="{{ month }}" onchange="this.form.submit()"></label>
+    </form>
+  </div>
+  <table>
+    <thead>
+      <tr><th>Date</th><th>Company</th><th>Invoice Number</th><th>PO Number</th><th>Invoice Total</th><th class="no-print">Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for p in purchases %}
+      <tr>
+        <td>{{ p.purchase_date }}</td>
+        <td>{{ p.company }}</td>
+        <td>{{ p.invoice_number }}</td>
+        <td>{{ p.po_number }}</td>
+        <td>${{ "%.2f"|format(p.invoice_total) }}</td>
+        <td class="no-print" style="white-space: nowrap;">
+          <a class="button" href="{{ url_for('edit_purchase', purchase_id=p.id, month=month) }}" style="padding:4px 8px; font-size:13px;">Edit</a>
+          <form method="POST" action="{{ url_for('delete_purchase', purchase_id=p.id, month=month) }}" onsubmit="return confirm('Delete this invoice forever?');" style="display:inline; margin:0;">
+            <button type="submit" style="padding:4px 8px; font-size:13px;">Delete</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+        <td colspan="6" style="text-align:center;">No invoices logged yet.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="4" style="text-align:right;">Total</th>
+        <th>${{ "%.2f"|format(total_spend) }}</th>
+        <th class="no-print"></th>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+{% endblock %}

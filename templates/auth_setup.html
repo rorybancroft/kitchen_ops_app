@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Create Admin | Kitchen Ops{% endblock %}
+{% block content %}
+<div class="card" style="max-width:560px; margin:36px auto;">
+  <h2 style="margin-bottom:8px;">Create your admin account</h2>
+  <p class="muted" style="margin-top:0;">First-time setup. This will be your login for the dashboard.</p>
+  <form method="post" style="display:grid; gap:12px;">
+    <div>
+      <label>Display Name (optional)</label>
+      <input type="text" name="display_name" autocomplete="name">
+    </div>
+    <div>
+      <label>Email</label>
+      <input type="email" name="email" required autocomplete="email">
+    </div>
+    <div>
+      <label>Password (min 10 chars)</label>
+      <input type="password" name="password" required autocomplete="new-password">
+    </div>
+    <div>
+      <label>Confirm Password</label>
+      <input type="password" name="password_confirm" required autocomplete="new-password">
+    </div>
+    <button type="submit" class="primary">Create Admin Account</button>
+  </form>
+</div>
+{% endblock %}
