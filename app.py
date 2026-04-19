@@ -2155,7 +2155,7 @@ def purchases():
     current_budget = float(budget_row["budget"]) if budget_row else 0.0
     
     # Calculate total spend
-    total_spend = sum(p["invoice_total"] for p in purchases_data)
+    total_spend = sum(float(p["invoice_total"]) for p in purchases_data)
     remaining_budget = current_budget - total_spend
     
     return render_template("purchases.html", purchases=purchases_data, total_spend=total_spend, month=month, current_budget=current_budget, remaining_budget=remaining_budget)
