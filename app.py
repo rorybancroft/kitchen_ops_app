@@ -2100,6 +2100,15 @@ def month_end_summary():
         transfers_total=transfers_total,
         inventory_total=inventory_total
     )
+@app.route("/purchases/<int:purchase_id>/edit")
+@login_required
+def edit_purchase(purchase_id):
+    return redirect(url_for("purchases", month=request.args.get("month", datetime.now().strftime("%Y-%m"))))
+
+@app.route("/purchases/<int:purchase_id>/delete", methods=["POST"])
+@login_required
+def delete_purchase(purchase_id):
+    return redirect(url_for("purchases", month=request.args.get("month", datetime.now().strftime("%Y-%m"))))
 
 @app.route("/purchases", methods=["GET", "POST"])
 @login_required
