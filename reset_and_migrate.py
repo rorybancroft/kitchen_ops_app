@@ -40,25 +40,26 @@ def reset_and_migrate():
         tables = [r[0] for r in sl_cur.fetchall() if r[0] != 'sqlite_sequence']
         
         for table in tables:
-            pg_cur.execute(f"ALTER TABLE {schema_name}.{table} DISABLE TRIGGER ALL")
-            
             sl_cur.execute(f"SELECT * FROM {table}")
             rows = sl_cur.fetchall()
             if not rows: 
-                pg_cur.execute(f"ALTER TABLE {schema_name}.{table} ENABLE TRIGGER ALL")
                 continue
             
             cols = ', '.join([d[0] for d in sl_cur.description])
             vals = ', '.join(['%s'] * len(sl_cur.description))
             
-            try:
-                pg_cur.executemany(f"INSERT INTO {schema_name}.{table} ({cols}) VALUES ({vals}) ON CONFLICT DO NOTHING", rows)
-                print(f"  Migrated {len(rows)} rows into {table}")
-            except Exception as e:
-                print(f"  Error on {table}: {e}")
-                pg_conn.rollback()
-                
-            pg_cur.execute(f"ALTER TABLE {schema_name}.{table} ENABLE TRIGGER ALL")
+            success_count = 0
+            for row in rows:
+                try:
+                    # Use a savepoint to catch individual row errors without crashing the transaction
+                    pg_cur.execute("SAVEPOINT row_insert")
+                    pg_cur.execute(f"INSERT INTO {schema_name}.{table} ({cols}) VALUES ({vals}) ON CONFLICT DO NOTHING", row)
+                    pg_cur.execute("RELEASE SAVEPOINT row_insert")
+                    success_count += 1
+                except Exception as e:
+                    pg_cur.execute("ROLLBACK TO SAVEPOINT row_insert")
+                    
+            print(f"  Migrated {success_count} / {len(rows)} rows into {table}")
             
         for table in tables:
             try:
