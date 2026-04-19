@@ -57,7 +57,7 @@ class PostgresConnWrapper:
 
     def execute(self, query, vars=None):
         cur = self.conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        pg_query = pg_query.replace("?", "%s")
+        pg_query = query.replace("?", "%s")
         pg_query = pg_query.replace("strftime('%Y-%m', purchase_date)", "to_char(purchase_date::date, 'YYYY-MM')")
         # Handle substr on dates
         import re
