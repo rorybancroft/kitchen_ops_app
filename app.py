@@ -2040,6 +2040,7 @@ def recipe_detail(recipe_id):
     custom_dietary = ", ".join([d for d in listed_dietary if d.lower() not in dietary_lower])
 
     conn.close()
+    label_translations = {"print_spanish": "Print (Spanish)"}
     return render_template(
         "recipe_detail.html",
         recipe=recipe,
@@ -2047,6 +2048,7 @@ def recipe_detail(recipe_id):
         units=units,
         ingredients=ingredients,
         total_cost=total_cost,
+        label_translations=label_translations,
         cost_per_serving=cost_per_serving,
         food_cost_pct=food_cost_pct,
         common_allergens=COMMON_ALLERGENS,
