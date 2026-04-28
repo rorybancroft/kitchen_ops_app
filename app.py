@@ -755,6 +755,16 @@ def dashboard():
     ).fetchone()
     waste_total = waste_row["t"] or 0.0
 
+    sales_row = conn.execute(
+        "SELECT SUM(net_sales) AS s FROM daily_sales WHERE substr(sale_date, 1, 7) = ?",
+        (current_month_str,)
+    ).fetchone()
+    total_sales = float(sales_row["s"]) if sales_row and sales_row["s"] else 0.0
+    
+    raw_food_cost_pct = 0.0
+    if total_sales > 0:
+        raw_food_cost_pct = (purchases_total / total_sales) * 100
+
     conn.close()
 
     low_stock = [i for i in items if i["on_hand"] <= i["reorder_level"]]
@@ -774,6 +784,7 @@ def dashboard():
         purchases_total=purchases_total,
         waste_total=waste_total,
         purchase_count=purchase_count,
+        raw_food_cost_pct=raw_food_cost_pct,
     )
 
 
