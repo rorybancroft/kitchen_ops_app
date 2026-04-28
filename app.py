@@ -573,6 +573,15 @@ def init_db(schema: str = None):
         """
     )
 
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS daily_sales (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sale_date DATE NOT NULL UNIQUE,
+            net_sales DECIMAL(10, 2) NOT NULL
+        )
+        """
+    )
 
     conn.execute(
         """
@@ -2170,6 +2179,64 @@ def purchases():
     remaining_budget = current_budget - total_spend
     
     return render_template("purchases.html", purchases=purchases_data, total_spend=total_spend, month=month, current_budget=current_budget, remaining_budget=remaining_budget)
+
+
+@app.route("/sales", methods=["GET", "POST"])
+@login_required
+def sales():
+    conn = get_conn()
+    month = request.args.get("month", datetime.now().strftime("%Y-%m"))
+    
+    if request.method == "POST":
+        action = request.form.get("action")
+        if action == "add_sale":
+            sale_date = request.form.get("sale_date")
+            try:
+                net_sales = float(request.form.get("net_sales", 0))
+            except ValueError:
+                net_sales = 0.0
+            
+            if sale_date and net_sales > 0:
+                conn.execute(
+                    """
+                    INSERT INTO daily_sales (sale_date, net_sales)
+                    VALUES (?, ?)
+                    ON CONFLICT(sale_date) DO UPDATE SET net_sales=excluded.net_sales
+                    """,
+                    (sale_date, net_sales)
+                )
+                conn.commit()
+            return redirect(url_for("sales", month=month))
+            
+        elif action == "delete_sale":
+            sale_id = request.form.get("sale_id")
+            if sale_id:
+                conn.execute("DELETE FROM daily_sales WHERE id = ?", (sale_id,))
+                conn.commit()
+            return redirect(url_for("sales", month=month))
+
+    # Fetch sales for this month
+    sales_data = conn.execute(
+        "SELECT * FROM daily_sales WHERE strftime('%Y-%m', sale_date) = ? ORDER BY sale_date DESC", 
+        (month,)
+    ).fetchall()
+    
+    total_sales = sum(float(s["net_sales"] or 0) for s in sales_data)
+    
+    # Calculate food cost for this month
+    # First get total purchases for the month
+    purchases_data = conn.execute(
+        "SELECT SUM(invoice_total) as total FROM purchases WHERE strftime('%Y-%m', purchase_date) = ?", 
+        (month,)
+    ).fetchone()
+    
+    total_purchases = float(purchases_data["total"]) if purchases_data and purchases_data["total"] else 0.0
+    
+    raw_food_cost_pct = 0.0
+    if total_sales > 0:
+        raw_food_cost_pct = (total_purchases / total_sales) * 100
+        
+    return render_template("sales.html", sales=sales_data, total_sales=total_sales, total_purchases=total_purchases, raw_food_cost_pct=raw_food_cost_pct, month=month)
 
 
 if __name__ == "__main__":

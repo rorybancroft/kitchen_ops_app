@@ -78,10 +78,10 @@
         <td>{{ p.po_number }}</td>
         <td>${{ "%.2f"|format(p.invoice_total) }}</td>
         <td class="no-print" style="white-space: nowrap;">
-          <!-- <a class="button" href="{{ url_for('edit_purchase', purchase_id=p.id, month=month) }}" style="padding:4px 8px; font-size:13px;">Edit</a>
+          {# <a class="button" href="{{ url_for('edit_purchase', purchase_id=p.id, month=month) }}" style="padding:4px 8px; font-size:13px;">Edit</a>
           <form method="POST" action="{{ url_for('delete_purchase', purchase_id=p.id, month=month) }}" onsubmit="return confirm('Delete this invoice forever?');" style="display:inline; margin:0;">
             <button type="submit" style="padding:4px 8px; font-size:13px;">Delete</button>
-          </form> -->
+          </form> #}
         </td>
       </tr>
       {% else %}
