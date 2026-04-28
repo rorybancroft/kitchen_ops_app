@@ -2186,6 +2186,15 @@ def purchases():
 @login_required
 def sales():
     conn = get_conn()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS daily_sales (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sale_date DATE NOT NULL UNIQUE,
+            net_sales DECIMAL(10, 2) NOT NULL
+        )
+        """
+    )
     month = request.args.get("month", datetime.now().strftime("%Y-%m"))
     
     if request.method == "POST":
