@@ -756,7 +756,7 @@ def dashboard():
         (current_month_str,)
     ).fetchone()
     purchase_count = purchases_row["c"] or 0
-    purchases_total = purchases_row["t"] or 0.0
+    purchases_total = float(purchases_row["t"] or 0.0)
     
     waste_row = conn.execute(
         "SELECT SUM(total_value) AS t FROM waste_log WHERE substr(date, 1, 7) = ?",
