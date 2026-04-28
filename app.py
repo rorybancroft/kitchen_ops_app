@@ -736,6 +736,15 @@ def select_inventory(inventory_key):
 @login_required
 def dashboard():
     conn = get_conn()
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS daily_sales (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            sale_date DATE NOT NULL UNIQUE,
+            net_sales DECIMAL(10, 2) NOT NULL
+        )
+        """
+    )
     items = conn.execute("SELECT * FROM items ORDER BY name").fetchall()
     recipe_count = conn.execute("SELECT COUNT(*) AS c FROM recipes").fetchone()["c"]
 
